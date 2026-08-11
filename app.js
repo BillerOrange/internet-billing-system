@@ -1,6 +1,36 @@
 const SUPABASE_URL = 'https://miiyapzxercxhgcahmfu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_jg9Ltn2IDaTn3Bb3mRrDDg_OUW4MtUz';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+async function loginUser() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const message = document.getElementById('loginMessage');
+
+  message.textContent = 'Logging in...';
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    message.textContent = 'Invalid email or password.';
+    return;
+  }
+
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appShell').classList.remove('hidden');
+  message.textContent = '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const loginBtn = document.getElementById('loginBtn');
+
+  if (loginBtn) {
+    loginBtn.addEventListener('click', loginUser);
+  }
+});
+
 const seedCustomers = [
   {
     id: 1,
