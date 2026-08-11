@@ -1,3 +1,6 @@
+const SUPABASE_URL = 'https://miiyapzxercxhgcahmfu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_jg9Ltn2IDaTn3Bb3mRrDDg_OUW4MtUz';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const seedCustomers = [
   {
     id: 1,
