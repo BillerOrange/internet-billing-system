@@ -46,3 +46,9 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Payment transactions recorded in ledger
 - Running balance per customer
 - Receipt/reference tracking in ledger
+
+## v5 Fix
+- Fixed blank customer dropdown in Ledger
+- Ledger automatically selects a customer
+- Fixed customer/account/balance summary
+- Rebuilt Ledger transactions as mobile-friendly cards on phones

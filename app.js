@@ -209,7 +209,15 @@ function fillCustomerSelects(){
   const options = customers.map(c => `<option value="${c.id}">${c.accountNo} - ${c.name}</option>`).join('');
   $('paymentCustomer').innerHTML = options || `<option value="">No customers</option>`;
   $('billCustomer').innerHTML = options || `<option value="">No customers</option>`;
-  if($('ledgerCustomer')) $('ledgerCustomer').innerHTML = options || `<option value="">No customers</option>`;
+  if($('ledgerCustomer')){
+    const previous = $('ledgerCustomer').value;
+    $('ledgerCustomer').innerHTML = options || `<option value="">No customers</option>`;
+    if(previous && customers.some(c => String(c.id) === String(previous))){
+      $('ledgerCustomer').value = previous;
+    } else if(customers.length){
+      $('ledgerCustomer').value = String(customers[0].id);
+    }
+  }
 }
 
 function renderAll(){
@@ -217,9 +225,9 @@ function renderAll(){
   renderCustomers();
   renderBilling();
   renderPayments();
-  renderLedger();
   renderReports();
   fillCustomerSelects();
+  renderLedger();
   saveData();
 }
 
