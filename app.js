@@ -537,61 +537,139 @@ function csvEscape(value){
   return `"${String(value ?? '').replace(/"/g,'""')}"`;
 }
 
-function downloadCollectionCSV(){
+function excelSafe(value){
+  return String(value ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function downloadCollectionExcel(){
   const type = $('collectionReportType')?.value || 'monthly';
   const year = $('collectionYearFilter')?.value || String(new Date().getFullYear());
   const month = $('collectionMonthFilter')?.value || '01';
   const monthName = COLLECTION_MONTHS.find(([m])=>m===month)?.[1] || month;
 
-  let csvRows = [];
+  const css = `
+    <style>
+      body{font-family:Arial,sans-serif;color:#1f2937;}
+      table{border-collapse:collapse;min-width:900px;}
+      td,th{border:1px solid #cbd5e1;padding:9px 12px;vertical-align:middle;}
+      .title{font-size:20px;font-weight:700;text-align:center;background:#17315f;color:white;padding:14px;}
+      .subtitle{font-size:13px;text-align:center;background:#eaf0fb;color:#334155;}
+      .label{font-weight:700;background:#f1f5f9;}
+      .header{font-weight:700;background:#2563eb;color:white;text-align:center;}
+      .money{text-align:right;mso-number-format:"₱#,##0.00";}
+      .center{text-align:center;}
+      .total-label{font-weight:700;background:#eaf0fb;}
+      .total-value{font-weight:700;background:#eaf0fb;text-align:right;mso-number-format:"₱#,##0.00";}
+      .spacer td{border:none;height:10px;}
+    </style>`;
+
+  let body = '';
   let filename = '';
 
   if(type === 'monthly'){
-    const matched = getSelectedCollectionPayments().slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const matched = getSelectedCollectionPayments().slice()
+      .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
     const total = matched.reduce((sum,p)=>sum + Number(p.amount || 0),0);
 
-    csvRows.push(['NETBILL MONTHLY COLLECTION REPORT']);
-    csvRows.push(['Period', `${monthName} ${year}`]);
-    csvRows.push([]);
-    csvRows.push(['Date','Receipt No.','Customer','Account No.','Reference','Amount']);
-
-    matched.forEach(p => {
+    const rows = matched.map(p => {
       const c = customers.find(x=>x.id===p.customerId);
-      csvRows.push([
-        p.date || '',
-        p.receiptNo || '',
-        p.customerName || c?.name || '',
-        p.accountNo || c?.accountNo || '',
-        p.reference || '',
-        Number(p.amount || 0).toFixed(2)
-      ]);
-    });
+      return `<tr>
+        <td class="center">${excelSafe(p.date || '')}</td>
+        <td>${excelSafe(p.receiptNo || '')}</td>
+        <td>${excelSafe(p.customerName || c?.name || '')}</td>
+        <td>${excelSafe(p.accountNo || c?.accountNo || '')}</td>
+        <td>${excelSafe(p.reference || '')}</td>
+        <td class="money">${Number(p.amount || 0).toFixed(2)}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="6" class="center">No payments recorded.</td></tr>`;
 
-    csvRows.push([]);
-    csvRows.push(['TOTAL PAYMENTS', matched.length]);
-    csvRows.push(['TOTAL COLLECTED', total.toFixed(2)]);
-    filename = `NetBill_Monthly_Report_${year}-${month}.csv`;
+    body = `
+      <table>
+        <colgroup>
+          <col style="width:120px">
+          <col style="width:150px">
+          <col style="width:210px">
+          <col style="width:150px">
+          <col style="width:220px">
+          <col style="width:130px">
+        </colgroup>
+        <tr><td colspan="6" class="title">NETBILL - MONTHLY COLLECTION REPORT</td></tr>
+        <tr><td colspan="6" class="subtitle">Internet Billing System | Powered by CM Philippines</td></tr>
+        <tr class="spacer"><td colspan="6"></td></tr>
+        <tr><td class="label">Period</td><td colspan="5">${monthName} ${year}</td></tr>
+        <tr><td class="label">No. of Payments</td><td colspan="5">${matched.length}</td></tr>
+        <tr class="spacer"><td colspan="6"></td></tr>
+        <tr>
+          <th class="header">Date</th>
+          <th class="header">Receipt No.</th>
+          <th class="header">Customer</th>
+          <th class="header">Account No.</th>
+          <th class="header">Reference</th>
+          <th class="header">Amount</th>
+        </tr>
+        ${rows}
+        <tr class="spacer"><td colspan="6"></td></tr>
+        <tr>
+          <td colspan="5" class="total-label">TOTAL COLLECTED</td>
+          <td class="total-value">${total.toFixed(2)}</td>
+        </tr>
+      </table>`;
+    filename = `NetBill_Monthly_Report_${year}-${month}.xls`;
   } else {
-    const rows = COLLECTION_MONTHS.map(([m,name]) => {
+    const rowsData = COLLECTION_MONTHS.map(([m,name]) => {
       const matched = payments.filter(p => String(p.date || '').startsWith(`${year}-${m}`));
-      return [name, matched.length, matched.reduce((sum,p)=>sum+Number(p.amount||0),0)];
+      return {
+        month:name,
+        count:matched.length,
+        total:matched.reduce((sum,p)=>sum + Number(p.amount || 0),0)
+      };
     });
-    const totalPayments = rows.reduce((s,r)=>s+Number(r[1]),0);
-    const totalCollected = rows.reduce((s,r)=>s+Number(r[2]),0);
+    const totalPayments = rowsData.reduce((s,r)=>s+r.count,0);
+    const totalCollected = rowsData.reduce((s,r)=>s+r.total,0);
 
-    csvRows.push(['NETBILL YEARLY COLLECTION REPORT']);
-    csvRows.push(['Year', year]);
-    csvRows.push([]);
-    csvRows.push(['Month','Number of Payments','Total Collected']);
-    rows.forEach(r=>csvRows.push([`${r[0]} ${year}`, r[1], Number(r[2]).toFixed(2)]));
-    csvRows.push([]);
-    csvRows.push(['TOTAL PAYMENTS', totalPayments]);
-    csvRows.push(['TOTAL COLLECTED', totalCollected.toFixed(2)]);
-    filename = `NetBill_Yearly_Report_${year}.csv`;
+    const rows = rowsData.map(r => `<tr>
+      <td>${r.month} ${year}</td>
+      <td class="center">${r.count}</td>
+      <td class="money">${r.total.toFixed(2)}</td>
+    </tr>`).join('');
+
+    body = `
+      <table>
+        <colgroup>
+          <col style="width:230px">
+          <col style="width:180px">
+          <col style="width:190px">
+        </colgroup>
+        <tr><td colspan="3" class="title">NETBILL - YEARLY COLLECTION REPORT</td></tr>
+        <tr><td colspan="3" class="subtitle">Internet Billing System | Powered by CM Philippines</td></tr>
+        <tr class="spacer"><td colspan="3"></td></tr>
+        <tr><td class="label">Year</td><td colspan="2">${year}</td></tr>
+        <tr class="spacer"><td colspan="3"></td></tr>
+        <tr>
+          <th class="header">Month</th>
+          <th class="header">No. of Payments</th>
+          <th class="header">Total Collected</th>
+        </tr>
+        ${rows}
+        <tr class="spacer"><td colspan="3"></td></tr>
+        <tr><td colspan="2" class="total-label">TOTAL PAYMENTS</td><td class="total-value">${totalPayments}</td></tr>
+        <tr><td colspan="2" class="total-label">TOTAL COLLECTED</td><td class="total-value">${totalCollected.toFixed(2)}</td></tr>
+      </table>`;
+    filename = `NetBill_Yearly_Report_${year}.xls`;
   }
 
-  const csv = csvRows.map(row => row.map(csvEscape).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const workbook = `<!DOCTYPE html>
+  <html xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:x="urn:schemas-microsoft-com:office:excel"
+        xmlns="http://www.w3.org/TR/REC-html40">
+  <head><meta charset="UTF-8">${css}</head>
+  <body>${body}</body></html>`;
+
+  const blob = new Blob(['\ufeff', workbook], {type:'application/vnd.ms-excel;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -876,7 +954,7 @@ $('statusFilter').addEventListener('change',renderCustomers);
 if($('collectionReportType')) $('collectionReportType').addEventListener('change',renderCollectionReport);
 if($('collectionYearFilter')) $('collectionYearFilter').addEventListener('change',renderCollectionReport);
 if($('collectionMonthFilter')) $('collectionMonthFilter').addEventListener('change',renderCollectionReport);
-if($('downloadCollectionBtn')) $('downloadCollectionBtn').addEventListener('click',downloadCollectionCSV);
+if($('downloadCollectionBtn')) $('downloadCollectionBtn').addEventListener('click',downloadCollectionExcel);
 if($('ledgerCustomer')) $('ledgerCustomer').addEventListener('change',renderLedger);
 if($('viewLedgerBtn')) $('viewLedgerBtn').addEventListener('click',renderLedger);
 

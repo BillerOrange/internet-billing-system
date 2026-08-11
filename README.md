@@ -114,3 +114,9 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Monthly CSV includes individual payment transactions and monthly totals
 - Yearly: choose a year and download January-December summary
 - Designed for historical/backtracking collection reports
+
+## v16 Formatted Excel Reports
+- Replaced plain CSV export with formatted Excel-compatible .xls export
+- Monthly report has wider columns, borders, title/header styling, payment details and total collected
+- Yearly report has January-December summary, payment counts and annual total
+- Designed to open cleanly in Excel/WPS and be easier to print or export to PDF
