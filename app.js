@@ -412,20 +412,24 @@ function renderLedger(){
 }
 
 
+
 function getPaymentYear(p){
-  const d = String(p.date || '');
-  return d.slice(0,4);
+  return String(p.date || '').slice(0,4);
 }
+
+const COLLECTION_MONTHS = [
+  ['01','January'],['02','February'],['03','March'],['04','April'],
+  ['05','May'],['06','June'],['07','July'],['08','August'],
+  ['09','September'],['10','October'],['11','November'],['12','December']
+];
 
 function renderCollectionYearOptions(){
   const select = $('collectionYearFilter');
   if(!select) return;
 
   const years = [...new Set(
-    payments
-      .map(getPaymentYear)
-      .filter(y => /^\d{4}$/.test(y))
-  )].sort((a,b)=>Number(b)-Number(a));
+    payments.map(getPaymentYear).filter(y => /^\d{4}$/.test(y))
+  )];
 
   const currentYear = String(new Date().getFullYear());
   if(!years.includes(currentYear)) years.push(currentYear);
@@ -434,61 +438,164 @@ function renderCollectionYearOptions(){
   const previous = select.value;
   select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
   if(previous && years.includes(previous)) select.value = previous;
-  else if(years.includes(currentYear)) select.value = currentYear;
+  else select.value = currentYear;
 }
 
-function buildMonthlyCollectionData(year){
-  const monthNames = [
-    'January','February','March','April','May','June',
-    'July','August','September','October','November','December'
-  ];
-
-  return monthNames.map((month, index) => {
-    const monthNum = String(index + 1).padStart(2,'0');
-    const matched = payments.filter(p => String(p.date || '').startsWith(`${year}-${monthNum}`));
-    return {
-      month,
-      paymentCount: matched.length,
-      total: matched.reduce((sum,p)=>sum + Number(p.amount || 0), 0)
-    };
-  });
-}
-
-function renderMonthlyCollection(){
-  const select = $('collectionYearFilter');
-  const table = $('monthlyCollectionTable');
-  if(!select || !table) return;
-
-  const year = select.value || String(new Date().getFullYear());
-  const rows = buildMonthlyCollectionData(year);
-
-  table.innerHTML = rows.map(r => `
-    <tr>
-      <td>${r.month} ${year}</td>
-      <td>${r.paymentCount}</td>
-      <td>${money(r.total)}</td>
-    </tr>
-  `).join('');
-}
-
-function downloadMonthlyCollectionCSV(){
+function getSelectedCollectionPayments(){
+  const type = $('collectionReportType')?.value || 'monthly';
   const year = $('collectionYearFilter')?.value || String(new Date().getFullYear());
-  const rows = buildMonthlyCollectionData(year);
+  const month = $('collectionMonthFilter')?.value || String(new Date().getMonth()+1).padStart(2,'0');
 
-  const csvRows = [
-    ['Month','Number of Payments','Total Collected'],
-    ...rows.map(r => [`${r.month} ${year}`, r.paymentCount, Number(r.total).toFixed(2)])
-  ];
+  if(type === 'monthly'){
+    return payments.filter(p => String(p.date || '').startsWith(`${year}-${month}`));
+  }
+  return payments.filter(p => String(p.date || '').startsWith(`${year}-`));
+}
 
-  const csv = csvRows.map(row =>
-    row.map(value => `"${String(value).replace(/"/g,'""')}"`).join(',')
-  ).join('\n');
+function renderCollectionReport(){
+  const type = $('collectionReportType')?.value || 'monthly';
+  const year = $('collectionYearFilter')?.value || String(new Date().getFullYear());
+  const month = $('collectionMonthFilter')?.value || '01';
+  const monthName = COLLECTION_MONTHS.find(([m])=>m===month)?.[1] || month;
+  const table = $('monthlyCollectionTable');
+  const head = $('collectionTableHead');
+  const summary = $('collectionReportSummary');
+  const monthLabel = $('collectionMonthLabel');
 
+  if(!table || !head || !summary) return;
+
+  if(monthLabel) monthLabel.style.display = type === 'monthly' ? '' : 'none';
+
+  if(type === 'monthly'){
+    const matched = getSelectedCollectionPayments().slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const total = matched.reduce((sum,p)=>sum + Number(p.amount || 0),0);
+
+    summary.innerHTML = `
+      <div class="summary-item"><span>Period</span><strong>${monthName} ${year}</strong></div>
+      <div class="summary-item"><span>No. of Payments</span><strong>${matched.length}</strong></div>
+      <div class="summary-item"><span>Total Collected</span><strong>${money(total)}</strong></div>
+    `;
+
+    head.innerHTML = `
+      <tr>
+        <th>Date</th>
+        <th>Receipt No.</th>
+        <th>Customer</th>
+        <th>Account No.</th>
+        <th>Reference</th>
+        <th>Amount</th>
+      </tr>
+    `;
+
+    table.innerHTML = matched.map(p => `
+      <tr>
+        <td>${p.date || '-'}</td>
+        <td>${p.receiptNo || '-'}</td>
+        <td>${p.customerName || customers.find(c=>c.id===p.customerId)?.name || '-'}</td>
+        <td>${p.accountNo || customers.find(c=>c.id===p.customerId)?.accountNo || '-'}</td>
+        <td>${p.reference || '-'}</td>
+        <td>${money(p.amount)}</td>
+      </tr>
+    `).join('') || `<tr><td colspan="6">No payments for ${monthName} ${year}.</td></tr>`;
+  } else {
+    const rows = COLLECTION_MONTHS.map(([m,name]) => {
+      const matched = payments.filter(p => String(p.date || '').startsWith(`${year}-${m}`));
+      return {
+        month:name,
+        count:matched.length,
+        total:matched.reduce((sum,p)=>sum + Number(p.amount || 0),0)
+      };
+    });
+    const yearPayments = rows.reduce((s,r)=>s+r.count,0);
+    const yearTotal = rows.reduce((s,r)=>s+r.total,0);
+
+    summary.innerHTML = `
+      <div class="summary-item"><span>Year</span><strong>${year}</strong></div>
+      <div class="summary-item"><span>No. of Payments</span><strong>${yearPayments}</strong></div>
+      <div class="summary-item"><span>Total Collected</span><strong>${money(yearTotal)}</strong></div>
+    `;
+
+    head.innerHTML = `
+      <tr>
+        <th>Month</th>
+        <th>No. of Payments</th>
+        <th>Total Collected</th>
+      </tr>
+    `;
+
+    table.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.month} ${year}</td>
+        <td>${r.count}</td>
+        <td>${money(r.total)}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+function csvEscape(value){
+  return `"${String(value ?? '').replace(/"/g,'""')}"`;
+}
+
+function downloadCollectionCSV(){
+  const type = $('collectionReportType')?.value || 'monthly';
+  const year = $('collectionYearFilter')?.value || String(new Date().getFullYear());
+  const month = $('collectionMonthFilter')?.value || '01';
+  const monthName = COLLECTION_MONTHS.find(([m])=>m===month)?.[1] || month;
+
+  let csvRows = [];
+  let filename = '';
+
+  if(type === 'monthly'){
+    const matched = getSelectedCollectionPayments().slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const total = matched.reduce((sum,p)=>sum + Number(p.amount || 0),0);
+
+    csvRows.push(['NETBILL MONTHLY COLLECTION REPORT']);
+    csvRows.push(['Period', `${monthName} ${year}`]);
+    csvRows.push([]);
+    csvRows.push(['Date','Receipt No.','Customer','Account No.','Reference','Amount']);
+
+    matched.forEach(p => {
+      const c = customers.find(x=>x.id===p.customerId);
+      csvRows.push([
+        p.date || '',
+        p.receiptNo || '',
+        p.customerName || c?.name || '',
+        p.accountNo || c?.accountNo || '',
+        p.reference || '',
+        Number(p.amount || 0).toFixed(2)
+      ]);
+    });
+
+    csvRows.push([]);
+    csvRows.push(['TOTAL PAYMENTS', matched.length]);
+    csvRows.push(['TOTAL COLLECTED', total.toFixed(2)]);
+    filename = `NetBill_Monthly_Report_${year}-${month}.csv`;
+  } else {
+    const rows = COLLECTION_MONTHS.map(([m,name]) => {
+      const matched = payments.filter(p => String(p.date || '').startsWith(`${year}-${m}`));
+      return [name, matched.length, matched.reduce((sum,p)=>sum+Number(p.amount||0),0)];
+    });
+    const totalPayments = rows.reduce((s,r)=>s+Number(r[1]),0);
+    const totalCollected = rows.reduce((s,r)=>s+Number(r[2]),0);
+
+    csvRows.push(['NETBILL YEARLY COLLECTION REPORT']);
+    csvRows.push(['Year', year]);
+    csvRows.push([]);
+    csvRows.push(['Month','Number of Payments','Total Collected']);
+    rows.forEach(r=>csvRows.push([`${r[0]} ${year}`, r[1], Number(r[2]).toFixed(2)]));
+    csvRows.push([]);
+    csvRows.push(['TOTAL PAYMENTS', totalPayments]);
+    csvRows.push(['TOTAL COLLECTED', totalCollected.toFixed(2)]);
+    filename = `NetBill_Yearly_Report_${year}.csv`;
+  }
+
+  const csv = csvRows.map(row => row.map(csvEscape).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `NetBill_Monthly_Collections_${year}.csv`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -529,7 +636,7 @@ function renderReports(){
   `).join('');
 
   renderCollectionYearOptions();
-  renderMonthlyCollection();
+  renderCollectionReport();
   renderOverdueCustomers();
 }
 
@@ -766,8 +873,10 @@ $('printReceiptBtn').addEventListener('click',()=>window.print());
 
 $('customerSearch').addEventListener('input',renderCustomers);
 $('statusFilter').addEventListener('change',renderCustomers);
-if($('collectionYearFilter')) $('collectionYearFilter').addEventListener('change',renderMonthlyCollection);
-if($('downloadMonthlyCollectionBtn')) $('downloadMonthlyCollectionBtn').addEventListener('click',downloadMonthlyCollectionCSV);
+if($('collectionReportType')) $('collectionReportType').addEventListener('change',renderCollectionReport);
+if($('collectionYearFilter')) $('collectionYearFilter').addEventListener('change',renderCollectionReport);
+if($('collectionMonthFilter')) $('collectionMonthFilter').addEventListener('change',renderCollectionReport);
+if($('downloadCollectionBtn')) $('downloadCollectionBtn').addEventListener('click',downloadCollectionCSV);
 if($('ledgerCustomer')) $('ledgerCustomer').addEventListener('change',renderLedger);
 if($('viewLedgerBtn')) $('viewLedgerBtn').addEventListener('click',renderLedger);
 

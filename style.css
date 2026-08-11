@@ -302,3 +302,26 @@ label{display:flex;flex-direction:column;gap:6px;font-size:14px}
     min-width:520px;
   }
 }
+
+/* v15 monthly/yearly reporting */
+.report-filters{
+  align-items:end;
+}
+.report-filters label{
+  min-width:150px;
+}
+#collectionReportSummary{
+  margin:14px 0 16px;
+}
+@media(max-width:760px){
+  .report-filters{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .report-filters label{
+    min-width:0;
+  }
+  #collectionReportSummary{
+    grid-template-columns:1fr;
+  }
+}

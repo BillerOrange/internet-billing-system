@@ -107,3 +107,10 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Counts all actual payments, including activation payments
 - Overdue customer list
 - Keeps Paid, Unpaid, and Overdue as separate account classifications
+
+## v15 Monthly and Yearly Backtracking Reports
+- Report Type selector: Monthly or Yearly
+- Monthly: choose a specific year and month
+- Monthly CSV includes individual payment transactions and monthly totals
+- Yearly: choose a year and download January-December summary
+- Designed for historical/backtracking collection reports

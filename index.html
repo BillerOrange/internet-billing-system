@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Internet Billing System</title>
-  <link rel="stylesheet" href="style.css?v=14" />
+  <link rel="stylesheet" href="style.css?v=15" />
 </head>
 <body>
   <div class="app-shell">
@@ -268,27 +268,47 @@
         <div class="card report-box monthly-report-box">
           <div class="section-head">
             <div>
-              <h3>Collection History per Month</h3>
-              <p>Monthly total of all actual payments received, including activation payments.</p>
+              <h3>Collection History</h3>
+              <p>Generate monthly or yearly collection reports for backtracking.</p>
             </div>
-            <button id="downloadMonthlyCollectionBtn" class="primary">Download CSV</button>
+            <button id="downloadCollectionBtn" class="primary">Download CSV</button>
           </div>
 
-          <div class="filters">
+          <div class="filters report-filters">
+            <label>Report Type
+              <select id="collectionReportType">
+                <option value="monthly">Monthly Report</option>
+                <option value="yearly">Yearly Report</option>
+              </select>
+            </label>
+
             <label>Year
               <select id="collectionYearFilter"></select>
             </label>
+
+            <label id="collectionMonthLabel">Month
+              <select id="collectionMonthFilter">
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </label>
           </div>
+
+          <div id="collectionReportSummary" class="summary-grid"></div>
 
           <div class="table-wrap">
             <table class="report-table">
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>No. of Payments</th>
-                  <th>Total Collected</th>
-                </tr>
-              </thead>
+              <thead id="collectionTableHead"></thead>
               <tbody id="monthlyCollectionTable"></tbody>
             </table>
           </div>
@@ -377,6 +397,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=14"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>
