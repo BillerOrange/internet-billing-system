@@ -1026,7 +1026,7 @@ renderAll();
   closeCustomerModal();
 });
 
-$('createBillBtn').addEventListener('click',()=>{
+$('createBillBtn').addEventListener('click', async ()=>{
   const customerId = $('billCustomer').value;
   const amount = Number($('billAmount').value || 0);
   const dueDate = $('billDueDate').value;
@@ -1038,25 +1038,48 @@ $('createBillBtn').addEventListener('click',()=>{
   }
 
   const previousBalance = Number(c.balance || 0);
-  c.currentBill = amount;
-  c.balance = previousBalance + amount;
-  c.dueDate = dueDate;
-  addLedgerEntry({
-    customerId: c.id,
-    date: todayISO(),
-    type: 'Bill',
-    description: 'Monthly internet bill',
-    previousBalance,
-    charge: amount,
-    payment: 0,
-    runningBalance: c.balance,
-    reference: `Due ${dueDate}`
-  });
-  renderAll();
-  alert('Monthly bill added successfully. Previous balance was carried forward.');
+const newBalance = previousBalance + amount;
+
+const { error: billError } = await supabaseClient
+  .from('billing')
+  .insert([{
+    client_id: c.id,
+    billing_month: todayISO(),
+    previous_balance: previousBalance,
+    current_charge: amount,
+    due_date: dueDate,
+    status: 'Unpaid',
+    description: 'Monthly internet bill'
+  }]);
+
+if(billError){
+  console.error(billError);
+  alert('Error saving bill: ' + billError.message);
+  return;
+}
+
+const { error: clientError } = await supabaseClient
+  .from('clients')
+  .update({
+    current_bill: amount,
+    balance: newBalance,
+    due_date: dueDate
+  })
+  .eq('id', c.id);
+
+if(clientError){
+  console.error(clientError);
+  alert('Bill was created, but customer balance update failed: ' + clientError.message);
+  return;
+}
+
+await loadCustomersFromSupabase();
+renderAll();
+
+alert('Monthly bill saved successfully.');
 });
 
-$('recordPaymentBtn').addEventListener('click',()=>{
+$('recordPaymentBtn').addEventListener('click', async ()=>{
   const customerId = $('paymentCustomer').value;
   const amount = Number($('paymentAmount').value || 0);
   const date = $('paymentDate').value || todayISO();
@@ -1078,37 +1101,76 @@ $('recordPaymentBtn').addEventListener('click',()=>{
   }
 
   const previousBalance = Number(c.balance || 0);
-  c.balance = Math.max(0, previousBalance - amount);
-  const payment = {
-    id: Date.now(),
-    receiptNo: nextReceiptNo(),
-    customerId: c.id,
-    customerName: c.name,
-    accountNo: c.accountNo,
-    amount,
-    date,
-    reference,
-    issuedBy,
-    balanceAfter: c.balance
-  };
-  payments.push(payment);
-  addLedgerEntry({
-    customerId: c.id,
-    date,
-    type: 'Payment',
-    description: `Payment ${payment.receiptNo}`,
-    previousBalance,
-    charge: 0,
-    payment: amount,
-    runningBalance: c.balance,
-    reference: reference || payment.receiptNo
-  });
+const newBalance = Math.max(0, previousBalance - amount);
+const receiptNo = nextReceiptNo();
 
-  $('paymentAmount').value = '';
-  $('paymentReference').value = '';
-  if($('paymentIssuedBy')) $('paymentIssuedBy').value = '';
-  renderAll();
-  showReceipt(payment.receiptNo);
+const { data: latestBill } = await supabaseClient
+  .from('billing')
+  .select('id')
+  .eq('client_id', c.id)
+  .order('created_at', { ascending: false })
+  .limit(1)
+  .maybeSingle();
+
+const { data: savedPayment, error: paymentError } = await supabaseClient
+  .from('payments')
+  .insert([{
+    billing_id: latestBill?.id || null,
+    client_id: c.id,
+    amount: amount,
+    payment_date: date,
+    payment_method: 'Cash',
+    reference_no: reference || receiptNo,
+    notes: '',
+    collector_email: '',
+    collected_by: issuedBy,
+    balance_before: previousBalance,
+    balance_after: newBalance
+  }])
+  .select()
+  .single();
+
+if(paymentError){
+  console.error(paymentError);
+  alert('Error saving payment: ' + paymentError.message);
+  return;
+}
+
+const { error: clientError } = await supabaseClient
+  .from('clients')
+  .update({
+    balance: newBalance
+  })
+  .eq('id', c.id);
+
+if(clientError){
+  console.error(clientError);
+  alert('Payment saved, but customer balance update failed: ' + clientError.message);
+  return;
+}
+
+const payment = {
+  id: savedPayment.id,
+  receiptNo: receiptNo,
+  customerId: c.id,
+  customerName: c.name,
+  accountNo: c.accountNo,
+  amount,
+  date,
+  reference: reference || receiptNo,
+  issuedBy,
+  balanceAfter: newBalance
+};
+
+payments.push(payment);
+
+$('paymentAmount').value = '';
+$('paymentReference').value = '';
+if($('paymentIssuedBy')) $('paymentIssuedBy').value = '';
+
+await loadCustomersFromSupabase();
+renderAll();
+showReceipt(payment.receiptNo);
 });
 
 window.showReceipt = receiptNo => {
