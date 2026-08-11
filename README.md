@@ -52,3 +52,10 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Ledger automatically selects a customer
 - Fixed customer/account/balance summary
 - Rebuilt Ledger transactions as mobile-friendly cards on phones
+
+## v6 Ledger Migration
+- Automatically reconstructs ledger history for existing customers.
+- Existing payment records are preserved.
+- Existing balances are not changed.
+- Migration runs once per browser/device.
+- Future bills and payments continue to record directly to the ledger.

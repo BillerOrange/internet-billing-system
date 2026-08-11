@@ -150,6 +150,64 @@ function addLedgerEntry(entry){
   });
 }
 
+
+function migrateExistingLedgerData(){
+  if(localStorage.getItem('nb_ledger_migrated_v6') === '1') return;
+
+  customers.forEach(c => {
+    const existing = ledgerEntries.filter(e => e.customerId === c.id);
+    if(existing.length) return;
+
+    const customerPayments = payments
+      .filter(p => p.customerId === c.id)
+      .sort((a,b) => String(a.date).localeCompare(String(b.date)));
+
+    const totalPaid = customerPayments.reduce((sum,p) => sum + Number(p.amount || 0), 0);
+    const currentBalance = Number(c.balance || 0);
+
+    // Reconstruct the opening billed amount from current balance + recorded payments.
+    const reconstructedBill = currentBalance + totalPaid;
+
+    if(reconstructedBill > 0){
+      let running = reconstructedBill;
+      const openingDate = c.activationDate || customerPayments[0]?.date || todayISO();
+
+      addLedgerEntry({
+        customerId: c.id,
+        date: openingDate,
+        type: 'Bill',
+        description: 'Existing account balance (migrated)',
+        previousBalance: 0,
+        charge: reconstructedBill,
+        payment: 0,
+        runningBalance: reconstructedBill,
+        reference: c.dueDate ? `Due ${c.dueDate}` : 'Migrated'
+      });
+
+      customerPayments.forEach(p => {
+        const previousBalance = running;
+        const paid = Number(p.amount || 0);
+        running = Math.max(0, running - paid);
+
+        addLedgerEntry({
+          customerId: c.id,
+          date: p.date || todayISO(),
+          type: 'Payment',
+          description: `Payment ${p.receiptNo || ''}`.trim(),
+          previousBalance,
+          charge: 0,
+          payment: paid,
+          runningBalance: running,
+          reference: p.reference || p.receiptNo || 'Migrated'
+        });
+      });
+    }
+  });
+
+  localStorage.setItem('nb_ledger_migrated_v6', '1');
+  saveData();
+}
+
 function renderLedger(){
   const select = $('ledgerCustomer');
   if(!select) return;
@@ -443,4 +501,5 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
   });
 });
 
+migrateExistingLedgerData();
 renderAll();
