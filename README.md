@@ -81,3 +81,9 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Running balance after a paid activation is zero.
 - The separate same-date Initial Bill card is removed for new customers.
 - July/August and future recurring monthly bills remain separate ledger entries.
+
+## v10 Activation Ledger Fix
+- Fixed the duplicate activation ledger entry for customers marked Paid upon activation.
+- Paid upon activation now creates only one combined activation transaction.
+- Unpaid upon activation still creates one initial bill entry.
+- Existing recurring monthly billing remains unchanged.

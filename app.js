@@ -486,20 +486,24 @@ $('saveCustomerBtn').addEventListener('click',()=>{
     };
     customers.push(newCustomer);
     const initialPaymentStatus = document.getElementById('initialPaymentStatus')?.value || 'unpaid';
-    const newlyAddedCustomer = customers[customers.length - 1];
-    recordInitialActivationPayment(newlyAddedCustomer, initialPaymentStatus);
 
-    addLedgerEntry({
-      customerId: newCustomer.id,
-      date: activationDate || todayISO(),
-      type: 'Bill',
-      description: 'Initial monthly bill',
-      previousBalance: 0,
-      charge: fee,
-      payment: 0,
-      runningBalance: fee,
-      reference: dueDate ? `Due ${dueDate}` : ''
-    });
+    if(initialPaymentStatus === 'paid'){
+      // Paid upon activation: record ONE combined ledger entry only.
+      recordInitialActivationPayment(newCustomer, initialPaymentStatus);
+    } else {
+      // Unpaid upon activation: keep the initial bill as an outstanding balance.
+      addLedgerEntry({
+        customerId: newCustomer.id,
+        date: activationDate || todayISO(),
+        type: 'Bill',
+        description: 'Initial monthly bill',
+        previousBalance: 0,
+        charge: fee,
+        payment: 0,
+        runningBalance: fee,
+        reference: dueDate ? `Due ${dueDate}` : ''
+      });
+    }
   }
 
   closeCustomerModal();
