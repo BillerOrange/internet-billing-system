@@ -36,10 +36,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
-        document.getElementById('appShell').classList.add('hidden');
-        document.getElementById('loginScreen').classList.remove('hidden');
-        document.getElementById('loginPassword').value = '';
+        const { error } = await supabaseClient.auth.signOut();
+
+        if (error) {
+            alert('Logout failed: ' + error.message);
+            return;
+        }
+
+        window.location.reload();
     });
 }
 
