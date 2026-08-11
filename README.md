@@ -38,3 +38,11 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Improved mobile dashboard spacing
 - Two-column mobile metric cards
 - Better phone-friendly forms and typography
+
+## v4 Update
+- Customer ledger
+- Previous balance carried forward
+- Monthly bill charges added to existing balance
+- Payment transactions recorded in ledger
+- Running balance per customer
+- Receipt/reference tracking in ledger

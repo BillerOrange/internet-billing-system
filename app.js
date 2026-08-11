@@ -29,6 +29,7 @@ const seedCustomers = [
 
 let customers = JSON.parse(localStorage.getItem('nb_customers') || 'null') || seedCustomers;
 let payments = JSON.parse(localStorage.getItem('nb_payments') || '[]');
+let ledgerEntries = JSON.parse(localStorage.getItem('nb_ledger') || '[]');
 let editingCustomerId = null;
 
 const $ = id => document.getElementById(id);
@@ -38,6 +39,7 @@ const money = value => '₱' + Number(value || 0).toLocaleString('en-PH',{minimu
 function saveData(){
   localStorage.setItem('nb_customers', JSON.stringify(customers));
   localStorage.setItem('nb_payments', JSON.stringify(payments));
+  localStorage.setItem('nb_ledger', JSON.stringify(ledgerEntries));
 }
 
 function getStatus(c){
@@ -140,6 +142,50 @@ function renderPayments(){
   }).join('') || `<tr><td colspan="7">No payments recorded yet.</td></tr>`;
 }
 
+
+function addLedgerEntry(entry){
+  ledgerEntries.push({
+    id: Date.now() + Math.floor(Math.random()*1000),
+    ...entry
+  });
+}
+
+function renderLedger(){
+  const select = $('ledgerCustomer');
+  if(!select) return;
+  const customerId = Number(select.value || customers[0]?.id || 0);
+  const c = customers.find(x=>x.id===customerId);
+
+  if(!c){
+    $('ledgerName').textContent = '-';
+    $('ledgerAccount').textContent = '-';
+    $('ledgerBalance').textContent = money(0);
+    $('ledgerTable').innerHTML = `<tr><td colspan="8">No customer selected.</td></tr>`;
+    return;
+  }
+
+  $('ledgerName').textContent = c.name;
+  $('ledgerAccount').textContent = c.accountNo;
+  $('ledgerBalance').textContent = money(c.balance);
+
+  const entries = ledgerEntries
+    .filter(e=>e.customerId===c.id)
+    .sort((a,b)=> String(a.date).localeCompare(String(b.date)) || Number(a.id)-Number(b.id));
+
+  $('ledgerTable').innerHTML = entries.map(e=>`
+    <tr>
+      <td>${e.date}</td>
+      <td>${e.type}</td>
+      <td>${e.description || '-'}</td>
+      <td>${money(e.previousBalance)}</td>
+      <td>${e.charge ? money(e.charge) : '-'}</td>
+      <td>${e.payment ? money(e.payment) : '-'}</td>
+      <td>${money(e.runningBalance)}</td>
+      <td>${e.reference || '-'}</td>
+    </tr>
+  `).join('') || `<tr><td colspan="8">No ledger transactions yet.</td></tr>`;
+}
+
 function renderReports(){
   const totalRevenue = payments.reduce((sum,p)=>sum + Number(p.amount || 0),0);
   const receivables = customers.reduce((sum,c)=>sum + Math.max(0,Number(c.balance || 0)),0);
@@ -163,6 +209,7 @@ function fillCustomerSelects(){
   const options = customers.map(c => `<option value="${c.id}">${c.accountNo} - ${c.name}</option>`).join('');
   $('paymentCustomer').innerHTML = options || `<option value="">No customers</option>`;
   $('billCustomer').innerHTML = options || `<option value="">No customers</option>`;
+  if($('ledgerCustomer')) $('ledgerCustomer').innerHTML = options || `<option value="">No customers</option>`;
 }
 
 function renderAll(){
@@ -170,6 +217,7 @@ function renderAll(){
   renderCustomers();
   renderBilling();
   renderPayments();
+  renderLedger();
   renderReports();
   fillCustomerSelects();
   saveData();
@@ -238,11 +286,23 @@ $('saveCustomerBtn').addEventListener('click',()=>{
     const c = customers.find(x=>x.id===editingCustomerId);
     Object.assign(c,{accountNo,name,address,contact,plan,fee,activationDate,dueDate});
   } else {
-    customers.push({
+    const newCustomer = {
       id: Date.now(),
       accountNo,name,address,contact,plan,fee,activationDate,dueDate,
       currentBill: fee,
       balance: fee
+    };
+    customers.push(newCustomer);
+    addLedgerEntry({
+      customerId: newCustomer.id,
+      date: activationDate || todayISO(),
+      type: 'Bill',
+      description: 'Initial monthly bill',
+      previousBalance: 0,
+      charge: fee,
+      payment: 0,
+      runningBalance: fee,
+      reference: dueDate ? `Due ${dueDate}` : ''
     });
   }
 
@@ -261,11 +321,23 @@ $('createBillBtn').addEventListener('click',()=>{
     return;
   }
 
+  const previousBalance = Number(c.balance || 0);
   c.currentBill = amount;
-  c.balance = amount;
+  c.balance = previousBalance + amount;
   c.dueDate = dueDate;
+  addLedgerEntry({
+    customerId: c.id,
+    date: todayISO(),
+    type: 'Bill',
+    description: 'Monthly internet bill',
+    previousBalance,
+    charge: amount,
+    payment: 0,
+    runningBalance: c.balance,
+    reference: `Due ${dueDate}`
+  });
   renderAll();
-  alert('Bill created/updated successfully.');
+  alert('Monthly bill added successfully. Previous balance was carried forward.');
 });
 
 $('recordPaymentBtn').addEventListener('click',()=>{
@@ -284,7 +356,8 @@ $('recordPaymentBtn').addEventListener('click',()=>{
     if(!confirm('Payment is higher than the current balance. Continue?')) return;
   }
 
-  c.balance = Math.max(0, Number(c.balance || 0) - amount);
+  const previousBalance = Number(c.balance || 0);
+  c.balance = Math.max(0, previousBalance - amount);
   const payment = {
     id: Date.now(),
     receiptNo: nextReceiptNo(),
@@ -297,6 +370,17 @@ $('recordPaymentBtn').addEventListener('click',()=>{
     balanceAfter: c.balance
   };
   payments.push(payment);
+  addLedgerEntry({
+    customerId: c.id,
+    date,
+    type: 'Payment',
+    description: `Payment ${payment.receiptNo}`,
+    previousBalance,
+    charge: 0,
+    payment: amount,
+    runningBalance: c.balance,
+    reference: reference || payment.receiptNo
+  });
 
   $('paymentAmount').value = '';
   $('paymentReference').value = '';
@@ -335,6 +419,8 @@ $('printReceiptBtn').addEventListener('click',()=>window.print());
 
 $('customerSearch').addEventListener('input',renderCustomers);
 $('statusFilter').addEventListener('change',renderCustomers);
+if($('ledgerCustomer')) $('ledgerCustomer').addEventListener('change',renderLedger);
+if($('viewLedgerBtn')) $('viewLedgerBtn').addEventListener('click',renderLedger);
 
 $('paymentDate').value = todayISO();
 $('billDueDate').value = todayISO();
