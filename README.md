@@ -120,3 +120,13 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Monthly report has wider columns, borders, title/header styling, payment details and total collected
 - Yearly report has January-December summary, payment counts and annual total
 - Designed to open cleanly in Excel/WPS and be easier to print or export to PDF
+
+## v17 Professional XLSX Reports
+- True .xlsx export instead of HTML-based .xls
+- Fixed readable date values (no Excel serial dates)
+- Wider columns for Receipt No., Customer, Account No., Reference, and Amount
+- Peso currency formatting
+- Monthly report: individual payment transactions and total collected
+- Yearly report: January-December collection summary
+- Separate worksheet name based on selected reporting period
+- Cleaner print/export layout for Excel and WPS Office

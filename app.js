@@ -537,147 +537,154 @@ function csvEscape(value){
   return `"${String(value ?? '').replace(/"/g,'""')}"`;
 }
 
-function excelSafe(value){
-  return String(value ?? '')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+function setCellStyle(cell, style){
+  if(cell) cell.s = style;
 }
 
 function downloadCollectionExcel(){
+  if(typeof XLSX === 'undefined'){
+    alert('Excel exporter is still loading. Please check your internet connection and try again.');
+    return;
+  }
+
   const type = $('collectionReportType')?.value || 'monthly';
   const year = $('collectionYearFilter')?.value || String(new Date().getFullYear());
   const month = $('collectionMonthFilter')?.value || '01';
   const monthName = COLLECTION_MONTHS.find(([m])=>m===month)?.[1] || month;
 
-  const css = `
-    <style>
-      body{font-family:Arial,sans-serif;color:#1f2937;}
-      table{border-collapse:collapse;min-width:900px;}
-      td,th{border:1px solid #cbd5e1;padding:9px 12px;vertical-align:middle;}
-      .title{font-size:20px;font-weight:700;text-align:center;background:#17315f;color:white;padding:14px;}
-      .subtitle{font-size:13px;text-align:center;background:#eaf0fb;color:#334155;}
-      .label{font-weight:700;background:#f1f5f9;}
-      .header{font-weight:700;background:#2563eb;color:white;text-align:center;}
-      .money{text-align:right;mso-number-format:"₱#,##0.00";}
-      .center{text-align:center;}
-      .total-label{font-weight:700;background:#eaf0fb;}
-      .total-value{font-weight:700;background:#eaf0fb;text-align:right;mso-number-format:"₱#,##0.00";}
-      .spacer td{border:none;height:10px;}
-    </style>`;
-
-  let body = '';
+  let aoa = [];
   let filename = '';
+  let merges = [];
+  let widths = [];
+  let moneyCol = null;
+  let dataStartRow = null;
+  let dataEndRow = null;
 
   if(type === 'monthly'){
     const matched = getSelectedCollectionPayments().slice()
       .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
     const total = matched.reduce((sum,p)=>sum + Number(p.amount || 0),0);
 
-    const rows = matched.map(p => {
+    aoa = [
+      ['NETBILL - MONTHLY COLLECTION REPORT','','','','',''],
+      ['Internet Billing System | Powered by CM Philippines','','','','',''],
+      [],
+      ['Period', `${monthName} ${year}`,'','','',''],
+      ['No. of Payments', matched.length,'','','',''],
+      [],
+      ['Date','Receipt No.','Customer','Account No.','Reference','Amount']
+    ];
+
+    matched.forEach(p=>{
       const c = customers.find(x=>x.id===p.customerId);
-      return `<tr>
-        <td class="center">${excelSafe(p.date || '')}</td>
-        <td>${excelSafe(p.receiptNo || '')}</td>
-        <td>${excelSafe(p.customerName || c?.name || '')}</td>
-        <td>${excelSafe(p.accountNo || c?.accountNo || '')}</td>
-        <td>${excelSafe(p.reference || '')}</td>
-        <td class="money">${Number(p.amount || 0).toFixed(2)}</td>
-      </tr>`;
-    }).join('') || `<tr><td colspan="6" class="center">No payments recorded.</td></tr>`;
-
-    body = `
-      <table>
-        <colgroup>
-          <col style="width:120px">
-          <col style="width:150px">
-          <col style="width:210px">
-          <col style="width:150px">
-          <col style="width:220px">
-          <col style="width:130px">
-        </colgroup>
-        <tr><td colspan="6" class="title">NETBILL - MONTHLY COLLECTION REPORT</td></tr>
-        <tr><td colspan="6" class="subtitle">Internet Billing System | Powered by CM Philippines</td></tr>
-        <tr class="spacer"><td colspan="6"></td></tr>
-        <tr><td class="label">Period</td><td colspan="5">${monthName} ${year}</td></tr>
-        <tr><td class="label">No. of Payments</td><td colspan="5">${matched.length}</td></tr>
-        <tr class="spacer"><td colspan="6"></td></tr>
-        <tr>
-          <th class="header">Date</th>
-          <th class="header">Receipt No.</th>
-          <th class="header">Customer</th>
-          <th class="header">Account No.</th>
-          <th class="header">Reference</th>
-          <th class="header">Amount</th>
-        </tr>
-        ${rows}
-        <tr class="spacer"><td colspan="6"></td></tr>
-        <tr>
-          <td colspan="5" class="total-label">TOTAL COLLECTED</td>
-          <td class="total-value">${total.toFixed(2)}</td>
-        </tr>
-      </table>`;
-    filename = `NetBill_Monthly_Report_${year}-${month}.xls`;
-  } else {
-    const rowsData = COLLECTION_MONTHS.map(([m,name]) => {
-      const matched = payments.filter(p => String(p.date || '').startsWith(`${year}-${m}`));
-      return {
-        month:name,
-        count:matched.length,
-        total:matched.reduce((sum,p)=>sum + Number(p.amount || 0),0)
-      };
+      aoa.push([
+        String(p.date || ''),
+        String(p.receiptNo || ''),
+        String(p.customerName || c?.name || ''),
+        String(p.accountNo || c?.accountNo || ''),
+        String(p.reference || ''),
+        Number(p.amount || 0)
+      ]);
     });
-    const totalPayments = rowsData.reduce((s,r)=>s+r.count,0);
-    const totalCollected = rowsData.reduce((s,r)=>s+r.total,0);
 
-    const rows = rowsData.map(r => `<tr>
-      <td>${r.month} ${year}</td>
-      <td class="center">${r.count}</td>
-      <td class="money">${r.total.toFixed(2)}</td>
-    </tr>`).join('');
+    aoa.push([]);
+    aoa.push(['TOTAL COLLECTED','','','','',total]);
 
-    body = `
-      <table>
-        <colgroup>
-          <col style="width:230px">
-          <col style="width:180px">
-          <col style="width:190px">
-        </colgroup>
-        <tr><td colspan="3" class="title">NETBILL - YEARLY COLLECTION REPORT</td></tr>
-        <tr><td colspan="3" class="subtitle">Internet Billing System | Powered by CM Philippines</td></tr>
-        <tr class="spacer"><td colspan="3"></td></tr>
-        <tr><td class="label">Year</td><td colspan="2">${year}</td></tr>
-        <tr class="spacer"><td colspan="3"></td></tr>
-        <tr>
-          <th class="header">Month</th>
-          <th class="header">No. of Payments</th>
-          <th class="header">Total Collected</th>
-        </tr>
-        ${rows}
-        <tr class="spacer"><td colspan="3"></td></tr>
-        <tr><td colspan="2" class="total-label">TOTAL PAYMENTS</td><td class="total-value">${totalPayments}</td></tr>
-        <tr><td colspan="2" class="total-label">TOTAL COLLECTED</td><td class="total-value">${totalCollected.toFixed(2)}</td></tr>
-      </table>`;
-    filename = `NetBill_Yearly_Report_${year}.xls`;
+    merges = [
+      {s:{r:0,c:0},e:{r:0,c:5}},
+      {s:{r:1,c:0},e:{r:1,c:5}},
+      {s:{r:3,c:1},e:{r:3,c:5}},
+      {s:{r:4,c:1},e:{r:4,c:5}},
+      {s:{r:aoa.length-1,c:0},e:{r:aoa.length-1,c:4}}
+    ];
+    widths = [{wch:15},{wch:18},{wch:28},{wch:18},{wch:30},{wch:17}];
+    moneyCol = 5;
+    dataStartRow = 7;
+    dataEndRow = 7 + matched.length - 1;
+    filename = `NetBill_Monthly_Report_${year}-${month}.xlsx`;
+  } else {
+    const rows = COLLECTION_MONTHS.map(([m,name])=>{
+      const matched = payments.filter(p=>String(p.date || '').startsWith(`${year}-${m}`));
+      return [name, matched.length, matched.reduce((s,p)=>s+Number(p.amount||0),0)];
+    });
+    const totalPayments = rows.reduce((s,r)=>s+Number(r[1]),0);
+    const totalCollected = rows.reduce((s,r)=>s+Number(r[2]),0);
+
+    aoa = [
+      ['NETBILL - YEARLY COLLECTION REPORT','',''],
+      ['Internet Billing System | Powered by CM Philippines','',''],
+      [],
+      ['Year',year,''],
+      [],
+      ['Month','No. of Payments','Total Collected']
+    ];
+    rows.forEach(r=>aoa.push([`${r[0]} ${year}`,r[1],r[2]]));
+    aoa.push([]);
+    aoa.push(['TOTAL PAYMENTS','',totalPayments]);
+    aoa.push(['TOTAL COLLECTED','',totalCollected]);
+
+    merges = [
+      {s:{r:0,c:0},e:{r:0,c:2}},
+      {s:{r:1,c:0},e:{r:1,c:2}},
+      {s:{r:3,c:1},e:{r:3,c:2}},
+      {s:{r:aoa.length-2,c:0},e:{r:aoa.length-2,c:1}},
+      {s:{r:aoa.length-1,c:0},e:{r:aoa.length-1,c:1}}
+    ];
+    widths = [{wch:24},{wch:20},{wch:20}];
+    moneyCol = 2;
+    dataStartRow = 6;
+    dataEndRow = 17;
+    filename = `NetBill_Yearly_Report_${year}.xlsx`;
   }
 
-  const workbook = `<!DOCTYPE html>
-  <html xmlns:o="urn:schemas-microsoft-com:office:office"
-        xmlns:x="urn:schemas-microsoft-com:office:excel"
-        xmlns="http://www.w3.org/TR/REC-html40">
-  <head><meta charset="UTF-8">${css}</head>
-  <body>${body}</body></html>`;
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges'] = merges;
+  ws['!cols'] = widths;
+  ws['!rows'] = aoa.map((_,i)=>({hpt: i===0 ? 30 : i===1 ? 22 : i===6 || (type==='yearly' && i===5) ? 24 : 21}));
+  ws['!freeze'] = {xSplit:0, ySplit:type==='monthly'?7:6, topLeftCell:type==='monthly'?'A8':'A7', activePane:'bottomLeft', state:'frozen'};
 
-  const blob = new Blob(['\ufeff', workbook], {type:'application/vnd.ms-excel;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  // Page/print metadata recognized by spreadsheet apps that support it.
+  ws['!margins'] = {left:0.3,right:0.3,top:0.5,bottom:0.5,header:0.2,footer:0.2};
+
+  // Keep dates as readable text; never allow Excel serial numbers or ####.
+  if(type === 'monthly' && dataStartRow <= dataEndRow){
+    for(let r=dataStartRow;r<=dataEndRow;r++){
+      const dc = ws[XLSX.utils.encode_cell({r,c:0})];
+      if(dc){ dc.t='s'; dc.z='@'; }
+    }
+  }
+
+  // Currency cells.
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for(let r=0;r<=range.e.r;r++){
+    const cell = ws[XLSX.utils.encode_cell({r,c:moneyCol})];
+    if(cell && typeof cell.v === 'number'){
+      cell.z = '₱#,##0.00';
+    }
+  }
+
+  // Set readable text formats on receipt/account/reference columns.
+  if(type === 'monthly' && dataStartRow <= dataEndRow){
+    [1,3,4].forEach(c=>{
+      for(let r=dataStartRow;r<=dataEndRow;r++){
+        const cell = ws[XLSX.utils.encode_cell({r,c})];
+        if(cell){ cell.t='s'; cell.z='@'; }
+      }
+    });
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, type === 'monthly' ? `${monthName} ${year}` : `Year ${year}`);
+
+  // Workbook properties.
+  wb.Props = {
+    Title: type === 'monthly' ? `NetBill Monthly Collection Report - ${monthName} ${year}` : `NetBill Yearly Collection Report - ${year}`,
+    Subject: 'Internet Billing Collection Report',
+    Author: 'NetBill - CM Philippines',
+    Company: 'CM Philippines'
+  };
+
+  XLSX.writeFile(wb, filename, {bookType:'xlsx', compression:true, cellStyles:true});
 }
 
 function renderOverdueCustomers(){
