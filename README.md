@@ -100,5 +100,10 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Customer deletion now also removes that customer's payment and ledger history.
 - Existing recurring July/August bills remain intact.
 
-## v13
-- Payment receipt now displays internet plans with Mbps (example: 50 Mbps).
+## v14 Monthly Collection Reports
+- Collection History per Month
+- Year filter
+- Downloadable CSV report for Excel/Google Sheets
+- Counts all actual payments, including activation payments
+- Overdue customer list
+- Keeps Paid, Unpaid, and Overdue as separate account classifications

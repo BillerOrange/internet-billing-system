@@ -285,3 +285,20 @@ label{display:flex;flex-direction:column;gap:6px;font-size:14px}
     font-size:12px !important;
   }
 }
+
+/* v14 reports */
+.monthly-report-box{margin-top:18px}
+.report-table{min-width:560px}
+#collectionYearFilter{min-width:120px}
+@media(max-width:760px){
+  .monthly-report-box .section-head{
+    display:block;
+  }
+  .monthly-report-box .section-head .primary{
+    display:inline-block;
+    margin-top:12px;
+  }
+  .report-table{
+    min-width:520px;
+  }
+}

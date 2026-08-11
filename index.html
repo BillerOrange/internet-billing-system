@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Internet Billing System</title>
-  <link rel="stylesheet" href="style.css?v=13" />
+  <link rel="stylesheet" href="style.css?v=14" />
 </head>
 <body>
   <div class="app-shell">
@@ -264,6 +264,57 @@
           <h3>Account Status Summary</h3>
           <div id="statusSummary" class="summary-grid"></div>
         </div>
+
+        <div class="card report-box monthly-report-box">
+          <div class="section-head">
+            <div>
+              <h3>Collection History per Month</h3>
+              <p>Monthly total of all actual payments received, including activation payments.</p>
+            </div>
+            <button id="downloadMonthlyCollectionBtn" class="primary">Download CSV</button>
+          </div>
+
+          <div class="filters">
+            <label>Year
+              <select id="collectionYearFilter"></select>
+            </label>
+          </div>
+
+          <div class="table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>No. of Payments</th>
+                  <th>Total Collected</th>
+                </tr>
+              </thead>
+              <tbody id="monthlyCollectionTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card report-box">
+          <div class="section-head">
+            <div>
+              <h3>Overdue Customers</h3>
+              <p>Customers with an unpaid balance past their due date.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Account No.</th>
+                  <th>Customer</th>
+                  <th>Due Date</th>
+                  <th>Balance</th>
+                </tr>
+              </thead>
+              <tbody id="overdueCustomerTable"></tbody>
+            </table>
+          </div>
+        </div>
       </section>
     </main>
   </div>
@@ -326,6 +377,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>

@@ -411,6 +411,105 @@ function renderLedger(){
   `).join('') || `<tr><td colspan="8">No ledger transactions yet.</td></tr>`;
 }
 
+
+function getPaymentYear(p){
+  const d = String(p.date || '');
+  return d.slice(0,4);
+}
+
+function renderCollectionYearOptions(){
+  const select = $('collectionYearFilter');
+  if(!select) return;
+
+  const years = [...new Set(
+    payments
+      .map(getPaymentYear)
+      .filter(y => /^\d{4}$/.test(y))
+  )].sort((a,b)=>Number(b)-Number(a));
+
+  const currentYear = String(new Date().getFullYear());
+  if(!years.includes(currentYear)) years.push(currentYear);
+  years.sort((a,b)=>Number(b)-Number(a));
+
+  const previous = select.value;
+  select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  if(previous && years.includes(previous)) select.value = previous;
+  else if(years.includes(currentYear)) select.value = currentYear;
+}
+
+function buildMonthlyCollectionData(year){
+  const monthNames = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+  ];
+
+  return monthNames.map((month, index) => {
+    const monthNum = String(index + 1).padStart(2,'0');
+    const matched = payments.filter(p => String(p.date || '').startsWith(`${year}-${monthNum}`));
+    return {
+      month,
+      paymentCount: matched.length,
+      total: matched.reduce((sum,p)=>sum + Number(p.amount || 0), 0)
+    };
+  });
+}
+
+function renderMonthlyCollection(){
+  const select = $('collectionYearFilter');
+  const table = $('monthlyCollectionTable');
+  if(!select || !table) return;
+
+  const year = select.value || String(new Date().getFullYear());
+  const rows = buildMonthlyCollectionData(year);
+
+  table.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.month} ${year}</td>
+      <td>${r.paymentCount}</td>
+      <td>${money(r.total)}</td>
+    </tr>
+  `).join('');
+}
+
+function downloadMonthlyCollectionCSV(){
+  const year = $('collectionYearFilter')?.value || String(new Date().getFullYear());
+  const rows = buildMonthlyCollectionData(year);
+
+  const csvRows = [
+    ['Month','Number of Payments','Total Collected'],
+    ...rows.map(r => [`${r.month} ${year}`, r.paymentCount, Number(r.total).toFixed(2)])
+  ];
+
+  const csv = csvRows.map(row =>
+    row.map(value => `"${String(value).replace(/"/g,'""')}"`).join(',')
+  ).join('\n');
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `NetBill_Monthly_Collections_${year}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function renderOverdueCustomers(){
+  const table = $('overdueCustomerTable');
+  if(!table) return;
+
+  const overdue = customers.filter(c => getStatus(c) === 'Overdue');
+  table.innerHTML = overdue.map(c => `
+    <tr>
+      <td>${c.accountNo}</td>
+      <td>${c.name}</td>
+      <td>${c.dueDate || '-'}</td>
+      <td>${money(c.balance)}</td>
+    </tr>
+  `).join('') || `<tr><td colspan="4">No overdue customers.</td></tr>`;
+}
+
 function renderReports(){
   const totalRevenue = payments.reduce((sum,p)=>sum + Number(p.amount || 0),0);
   const receivables = customers.reduce((sum,c)=>sum + Math.max(0,Number(c.balance || 0)),0);
@@ -428,6 +527,10 @@ function renderReports(){
   $('statusSummary').innerHTML = Object.entries(counts).map(([k,v]) => `
     <div class="summary-item"><span>${k}</span><strong>${v}</strong></div>
   `).join('');
+
+  renderCollectionYearOptions();
+  renderMonthlyCollection();
+  renderOverdueCustomers();
 }
 
 function fillCustomerSelects(){
@@ -663,6 +766,8 @@ $('printReceiptBtn').addEventListener('click',()=>window.print());
 
 $('customerSearch').addEventListener('input',renderCustomers);
 $('statusFilter').addEventListener('change',renderCustomers);
+if($('collectionYearFilter')) $('collectionYearFilter').addEventListener('change',renderMonthlyCollection);
+if($('downloadMonthlyCollectionBtn')) $('downloadMonthlyCollectionBtn').addEventListener('click',downloadMonthlyCollectionCSV);
 if($('ledgerCustomer')) $('ledgerCustomer').addEventListener('change',renderLedger);
 if($('viewLedgerBtn')) $('viewLedgerBtn').addEventListener('click',renderLedger);
 
