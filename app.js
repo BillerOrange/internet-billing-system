@@ -94,8 +94,44 @@ async function loadBillingAndPaymentsFromSupabase() {
     console.error('Error loading payments:', paymentError);
   }
 
-  console.log('Billing loaded:', billingData);
-  console.log('Payments loaded:', paymentData);
+  payments = (paymentData || []).map((p, index) => ({
+    id: p.id,
+    customerId: p.client_id,
+    amount: Number(p.amount || 0),
+    date: String(p.payment_date || '').slice(0, 10),
+    reference: p.reference_no || '',
+    issuedBy: p.collected_by || '',
+    receiptNo: p.receipt_no || p.reference_no || `RCPT-${String(index + 1).padStart(5,'0')}`,
+    balanceAfter: Number(p.balance_after || 0)
+  }));
+
+  const billingLedger = (billingData || []).map(b => ({
+    id: b.id,
+    customerId: b.client_id,
+    date: String(b.billing_month || b.created_at || '').slice(0, 10),
+    type: 'Bill',
+    description: b.description || 'Monthly internet bill',
+    previousBalance: Number(b.previous_balance || 0),
+    charge: Number(b.current_charge || 0),
+    payment: 0,
+    runningBalance: Number(b.previous_balance || 0) + Number(b.current_charge || 0),
+    reference: b.due_date ? `Due ${b.due_date}` : ''
+  }));
+
+  const paymentLedger = (paymentData || []).map(p => ({
+    id: p.id,
+    customerId: p.client_id,
+    date: String(p.payment_date || p.created_at || '').slice(0, 10),
+    type: 'Payment',
+    description: `Payment ${p.receipt_no || p.reference_no || ''}`.trim(),
+    previousBalance: Number(p.balance_before || 0),
+    charge: 0,
+    payment: Number(p.amount || 0),
+    runningBalance: Number(p.balance_after || 0),
+    reference: p.reference_no || ''
+  }));
+
+  ledgerEntries = [...billingLedger, ...paymentLedger];
 }
 let ledgerEntries = JSON.parse(localStorage.getItem('nb_ledger') || '[]');
 let editingCustomerId = null;
@@ -471,7 +507,7 @@ function runAutomaticMonthlyBilling(){
 function renderLedger(){
   const select = $('ledgerCustomer');
   if(!select) return;
-  const customerId = Number(select.value || customers[0]?.id || 0);
+  const customerId = select.value || customers[0]?.id || '';
   const c = customers.find(x=>x.id===customerId);
 
   if(!c){
@@ -488,7 +524,7 @@ function renderLedger(){
 
   const entries = ledgerEntries
     .filter(e=>e.customerId===c.id)
-    .sort((a,b)=> String(a.date).localeCompare(String(b.date)) || Number(a.id)-Number(b.id));
+.sort((a,b)=> String(a.date).localeCompare(String(b.date)));
 
   $('ledgerTable').innerHTML = entries.map(e=>`
     <tr>
