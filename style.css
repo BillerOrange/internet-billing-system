@@ -6,7 +6,7 @@ button{cursor:pointer}
 .app-shell{display:flex;min-height:100vh}
 .sidebar{width:240px;background:var(--sidebar);color:#fff;padding:24px 16px;position:sticky;top:0;height:100vh}
 .brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
-.brand-mark{width:46px;height:46px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700}
+.brand-mark{width:46px;height:46px;border-radius:12px;background:#000;display:flex;align-items:center;justify-content:center;font-weight:700}
 .brand h1{margin:0;font-size:24px}.brand p{margin:4px 0 0;color:#9ca3af;font-size:13px}
 .sidebar nav{display:flex;flex-direction:column;gap:8px}
 .nav-btn{background:transparent;color:#d1d5db;border:0;text-align:left;padding:12px 14px;border-radius:9px}
