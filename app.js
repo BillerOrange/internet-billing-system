@@ -25,11 +25,21 @@ renderAll();
   message.textContent = '';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const loginBtn = document.getElementById('loginBtn');
 
   if (loginBtn) {
     loginBtn.addEventListener('click', loginUser);
+  }
+
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (session) {
+    await loadCustomersFromSupabase();
+    renderAll();
+
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appShell').classList.remove('hidden');
   }
 });
 
