@@ -284,6 +284,40 @@ function recordInitialActivationPayment(customer, status){
     runningBalance: 0,
     reference: paymentKey
   });
+
+  // Final safety cleanup: for a paid activation, there must never be a
+  // separate Initial monthly bill on the activation date.
+  for(let i = ledgerEntries.length - 1; i >= 0; i--){
+    const e = ledgerEntries[i];
+    if(
+      e.customerId === customer.id &&
+      e.date === activationDate &&
+      e.type === 'Bill' &&
+      e.description === 'Initial monthly bill'
+    ){
+      ledgerEntries.splice(i, 1);
+    }
+  }
+}
+
+
+function cleanupPaidActivationDuplicates(){
+  const paidKeys = new Set(
+    ledgerEntries
+      .filter(e => e.type === 'Activation Bill (Paid)')
+      .map(e => `${e.customerId}|${e.date}`)
+  );
+
+  for(let i = ledgerEntries.length - 1; i >= 0; i--){
+    const e = ledgerEntries[i];
+    if(
+      e.type === 'Bill' &&
+      e.description === 'Initial monthly bill' &&
+      paidKeys.has(`${e.customerId}|${e.date}`)
+    ){
+      ledgerEntries.splice(i, 1);
+    }
+  }
 }
 
 function runAutomaticMonthlyBilling(){
@@ -637,4 +671,6 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
 
 migrateExistingLedgerData();
 runAutomaticMonthlyBilling();
+cleanupPaidActivationDuplicates();
+saveData();
 renderAll();

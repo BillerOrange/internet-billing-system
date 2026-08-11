@@ -87,3 +87,9 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Paid upon activation now creates only one combined activation transaction.
 - Unpaid upon activation still creates one initial bill entry.
 - Existing recurring monthly billing remains unchanged.
+
+## v11 Paid Activation Deduplication
+- Removes any separate Initial monthly bill when a same-date Activation Bill (Paid) exists.
+- Cleanup also runs at startup, so duplicate activation entries created by earlier v10 tests are cleaned from the ledger.
+- July/August recurring bills are preserved.
+- Customer running balance is not reduced a second time.
