@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Internet Billing System</title>
-  <link rel="stylesheet" href="style.css?v=17" />
+  <link rel="stylesheet" href="style.css?v=22" />
 </head>
 <body>
   <div class="app-shell">
@@ -182,6 +182,9 @@
           <label>Reference No.
             <input id="paymentReference" type="text" placeholder="Optional" />
           </label>
+          <label>Collected By
+            <input id="paymentIssuedBy" type="text" placeholder="Name of collector" />
+          </label>
           <button id="recordPaymentBtn" class="primary">Record Payment</button>
         </div>
 
@@ -194,6 +197,7 @@
                 <th>Customer</th>
                 <th>Amount</th>
                 <th>Reference</th>
+                <th>Issued By</th>
                 <th>Balance After</th>
                 <th>Receipt</th>
               </tr>
@@ -392,12 +396,13 @@
       <div id="receiptContent"></div>
       <div class="modal-actions no-print">
         <button id="closeReceiptBtn" class="secondary">Close</button>
-        <button id="printReceiptBtn" class="primary">Print Receipt</button>
+        <button id="downloadReceiptBtn" class="primary">Download Receipt</button>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="app.js?v=17"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="app.js?v=22"></script>
 </body>
 </html>

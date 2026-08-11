@@ -135,11 +135,12 @@ function renderPayments(){
         <td>${c ? c.name : p.customerName}</td>
         <td>${money(p.amount)}</td>
         <td>${p.reference || '-'}</td>
+        <td>${p.issuedBy || '-'}</td>
         <td>${money(p.balanceAfter)}</td>
         <td><button class="small-btn" onclick="showReceipt('${p.receiptNo}')">View</button></td>
       </tr>
     `;
-  }).join('') || `<tr><td colspan="7">No payments recorded yet.</td></tr>`;
+  }).join('') || `<tr><td colspan="8">No payments recorded yet.</td></tr>`;
 }
 
 
@@ -483,7 +484,9 @@ function renderCollectionReport(){
         <th>Customer</th>
         <th>Account No.</th>
         <th>Reference</th>
-        <th>Amount</th>
+        <th>Amount Paid</th>
+        <th>Outstanding Balance</th>
+        <th>Collected By</th>
       </tr>
     `;
 
@@ -495,8 +498,10 @@ function renderCollectionReport(){
         <td>${p.accountNo || customers.find(c=>c.id===p.customerId)?.accountNo || '-'}</td>
         <td>${p.reference || '-'}</td>
         <td>${money(p.amount)}</td>
+        <td>${money(p.balanceAfter)}</td>
+        <td>${p.issuedBy || '-'}</td>
       </tr>
-    `).join('') || `<tr><td colspan="6">No payments for ${monthName} ${year}.</td></tr>`;
+    `).join('') || `<tr><td colspan="8">No payments for ${monthName} ${year}.</td></tr>`;
   } else {
     const rows = COLLECTION_MONTHS.map(([m,name]) => {
       const matched = payments.filter(p => String(p.date || '').startsWith(`${year}-${m}`));
@@ -551,66 +556,160 @@ function downloadCollectionExcel(){
   const year = $('collectionYearFilter')?.value || String(new Date().getFullYear());
   const month = $('collectionMonthFilter')?.value || '01';
   const monthName = COLLECTION_MONTHS.find(([m])=>m===month)?.[1] || month;
+  const wb = XLSX.utils.book_new();
 
-  let aoa = [];
-  let filename = '';
-  let merges = [];
-  let widths = [];
-  let moneyCol = null;
-  let dataStartRow = null;
-  let dataEndRow = null;
+  function formatMoneyColumn(ws, colIndex){
+    if(!ws['!ref']) return;
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for(let r=0;r<=range.e.r;r++){
+      const cell = ws[XLSX.utils.encode_cell({r,c:colIndex})];
+      if(cell && typeof cell.v === 'number') cell.z='₱#,##0.00';
+    }
+  }
+
+  function addOutstandingSheet(){
+    const outstanding = customers
+      .filter(c=>Number(c.balance || 0) > 0)
+      .slice()
+      .sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
+
+    const rows = [
+      ['NETBILL - CURRENT OUTSTANDING BALANCES','','','',''],
+      ['Generated', new Date().toLocaleString(),'','',''],
+      [],
+      ['Account No.','Client','Status','Due Date','Outstanding Balance']
+    ];
+
+    outstanding.forEach(c=>{
+      rows.push([
+        String(c.accountNo || ''),
+        String(c.name || ''),
+        String(getStatus(c) || ''),
+        String(c.dueDate || ''),
+        Number(c.balance || 0)
+      ]);
+    });
+
+    const total = outstanding.reduce((s,c)=>s+Number(c.balance||0),0);
+    rows.push([]);
+    rows.push(['TOTAL OUTSTANDING','','','',total]);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:18},{wch:30},{wch:16},{wch:16},{wch:22}];
+    formatMoneyColumn(ws,4);
+    XLSX.utils.book_append_sheet(wb,ws,'Outstanding Balances');
+  }
+
+  function addCollectorSummary(sourcePayments, sheetName, periodLabel){
+    const collectors = {};
+    sourcePayments.forEach(p=>{
+      const name = String(p.issuedBy || 'Unspecified').trim() || 'Unspecified';
+      if(!collectors[name]) collectors[name]={count:0,total:0};
+      collectors[name].count += 1;
+      collectors[name].total += Number(p.amount||0);
+    });
+
+    const rows = [
+      ['NETBILL - COLLECTOR SUMMARY','',''],
+      ['Period',periodLabel,''],
+      [],
+      ['Collected By','No. of Payments','Total Collected']
+    ];
+
+    Object.entries(collectors)
+      .sort((a,b)=>b[1].total-a[1].total)
+      .forEach(([name,v])=>rows.push([name,v.count,v.total]));
+
+    rows.push([]);
+    rows.push([
+      'TOTAL',
+      sourcePayments.length,
+      sourcePayments.reduce((s,p)=>s+Number(p.amount||0),0)
+    ]);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:30},{wch:18},{wch:20}];
+    formatMoneyColumn(ws,2);
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  }
 
   if(type === 'monthly'){
     const matched = getSelectedCollectionPayments().slice()
       .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-    const total = matched.reduce((sum,p)=>sum + Number(p.amount || 0),0);
+    const total = matched.reduce((s,p)=>s+Number(p.amount||0),0);
 
-    aoa = [
-      ['NETBILL - MONTHLY COLLECTION REPORT','','','','',''],
-      ['Internet Billing System | Powered by CM Philippines','','','','',''],
+    const rows = [
+      ['NETBILL - MONTHLY COLLECTION REPORT','','','','','','',''],
+      ['Internet Billing System | Powered by CM Philippines','','','','','','',''],
       [],
-      ['Period', `${monthName} ${year}`,'','','',''],
-      ['No. of Payments', matched.length,'','','',''],
+      ['Period',`${monthName} ${year}`,'','','','','',''],
+      ['No. of Payments',matched.length,'','','','','',''],
       [],
-      ['Date','Receipt No.','Customer','Account No.','Reference','Amount']
+      ['Date','Receipt No.','Client','Account No.','Reference','Amount Paid','Outstanding Balance','Collected By']
     ];
 
     matched.forEach(p=>{
       const c = customers.find(x=>x.id===p.customerId);
-      aoa.push([
-        String(p.date || ''),
-        String(p.receiptNo || ''),
-        String(p.customerName || c?.name || ''),
-        String(p.accountNo || c?.accountNo || ''),
-        String(p.reference || ''),
-        Number(p.amount || 0)
+      rows.push([
+        String(p.date||''),
+        String(p.receiptNo||''),
+        String(p.customerName||c?.name||''),
+        String(p.accountNo||c?.accountNo||''),
+        String(p.reference||''),
+        Number(p.amount||0),
+        Number(p.balanceAfter||0),
+        String(p.issuedBy||'-')
       ]);
     });
 
-    aoa.push([]);
-    aoa.push(['TOTAL COLLECTED','','','','',total]);
+    rows.push([]);
+    rows.push(['TOTAL COLLECTED','','','','',total,'','']);
 
-    merges = [
-      {s:{r:0,c:0},e:{r:0,c:5}},
-      {s:{r:1,c:0},e:{r:1,c:5}},
-      {s:{r:3,c:1},e:{r:3,c:5}},
-      {s:{r:4,c:1},e:{r:4,c:5}},
-      {s:{r:aoa.length-1,c:0},e:{r:aoa.length-1,c:4}}
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!merges']=[
+      {s:{r:0,c:0},e:{r:0,c:7}},
+      {s:{r:1,c:0},e:{r:1,c:7}},
+      {s:{r:3,c:1},e:{r:3,c:7}},
+      {s:{r:4,c:1},e:{r:4,c:7}},
+      {s:{r:rows.length-1,c:0},e:{r:rows.length-1,c:4}}
     ];
-    widths = [{wch:15},{wch:18},{wch:28},{wch:18},{wch:30},{wch:17}];
-    moneyCol = 5;
-    dataStartRow = 7;
-    dataEndRow = 7 + matched.length - 1;
-    filename = `NetBill_Monthly_Report_${year}-${month}.xlsx`;
-  } else {
-    const rows = COLLECTION_MONTHS.map(([m,name])=>{
-      const matched = payments.filter(p=>String(p.date || '').startsWith(`${year}-${m}`));
-      return [name, matched.length, matched.reduce((s,p)=>s+Number(p.amount||0),0)];
-    });
-    const totalPayments = rows.reduce((s,r)=>s+Number(r[1]),0);
-    const totalCollected = rows.reduce((s,r)=>s+Number(r[2]),0);
+    ws['!cols']=[
+      {wch:15},{wch:18},{wch:28},{wch:18},
+      {wch:28},{wch:17},{wch:22},{wch:24}
+    ];
+    ws['!freeze']={xSplit:0,ySplit:7,topLeftCell:'A8',activePane:'bottomLeft',state:'frozen'};
+    formatMoneyColumn(ws,5);
+    formatMoneyColumn(ws,6);
+    XLSX.utils.book_append_sheet(wb,ws,`${monthName} ${year}`);
 
-    aoa = [
+    addCollectorSummary(matched,'Collector Audit',`${monthName} ${year}`);
+    addOutstandingSheet();
+
+    wb.Props={
+      Title:`NetBill Monthly Collection Report - ${monthName} ${year}`,
+      Subject:'Complete Collection, Outstanding Balance, and Collector Audit Report',
+      Author:'NetBill - CM Philippines',
+      Company:'CM Philippines'
+    };
+    XLSX.writeFile(wb,`NetBill_Monthly_Report_${year}-${month}.xlsx`,{
+      bookType:'xlsx',compression:true,cellStyles:true
+    });
+
+  } else {
+    const yearPayments = payments
+      .filter(p=>String(p.date||'').startsWith(`${year}-`))
+      .slice()
+      .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+
+    const monthlyRows = COLLECTION_MONTHS.map(([m,name])=>{
+      const matched = yearPayments.filter(p=>String(p.date||'').startsWith(`${year}-${m}`));
+      return [name,matched.length,matched.reduce((s,p)=>s+Number(p.amount||0),0)];
+    });
+
+    const totalPayments=yearPayments.length;
+    const totalCollected=yearPayments.reduce((s,p)=>s+Number(p.amount||0),0);
+
+    const summary=[
       ['NETBILL - YEARLY COLLECTION REPORT','',''],
       ['Internet Billing System | Powered by CM Philippines','',''],
       [],
@@ -618,73 +717,58 @@ function downloadCollectionExcel(){
       [],
       ['Month','No. of Payments','Total Collected']
     ];
-    rows.forEach(r=>aoa.push([`${r[0]} ${year}`,r[1],r[2]]));
-    aoa.push([]);
-    aoa.push(['TOTAL PAYMENTS','',totalPayments]);
-    aoa.push(['TOTAL COLLECTED','',totalCollected]);
+    monthlyRows.forEach(r=>summary.push([`${r[0]} ${year}`,r[1],r[2]]));
+    summary.push([]);
+    summary.push(['TOTAL PAYMENTS','',totalPayments]);
+    summary.push(['TOTAL COLLECTED','',totalCollected]);
 
-    merges = [
-      {s:{r:0,c:0},e:{r:0,c:2}},
-      {s:{r:1,c:0},e:{r:1,c:2}},
-      {s:{r:3,c:1},e:{r:3,c:2}},
-      {s:{r:aoa.length-2,c:0},e:{r:aoa.length-2,c:1}},
-      {s:{r:aoa.length-1,c:0},e:{r:aoa.length-1,c:1}}
+    const sws=XLSX.utils.aoa_to_sheet(summary);
+    sws['!cols']=[{wch:24},{wch:20},{wch:20}];
+    formatMoneyColumn(sws,2);
+    XLSX.utils.book_append_sheet(wb,sws,`Year ${year}`);
+
+    // Full transaction-level yearly audit with balance after every payment.
+    const detail=[
+      ['NETBILL - YEARLY PAYMENT AUDIT','','','','','','',''],
+      ['Date','Receipt No.','Client','Account No.','Reference','Amount Paid','Outstanding Balance','Collected By']
     ];
-    widths = [{wch:24},{wch:20},{wch:20}];
-    moneyCol = 2;
-    dataStartRow = 6;
-    dataEndRow = 17;
-    filename = `NetBill_Yearly_Report_${year}.xlsx`;
-  }
 
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!merges'] = merges;
-  ws['!cols'] = widths;
-  ws['!rows'] = aoa.map((_,i)=>({hpt: i===0 ? 30 : i===1 ? 22 : i===6 || (type==='yearly' && i===5) ? 24 : 21}));
-  ws['!freeze'] = {xSplit:0, ySplit:type==='monthly'?7:6, topLeftCell:type==='monthly'?'A8':'A7', activePane:'bottomLeft', state:'frozen'};
+    yearPayments.forEach(p=>{
+      const c=customers.find(x=>x.id===p.customerId);
+      detail.push([
+        String(p.date||''),
+        String(p.receiptNo||''),
+        String(p.customerName||c?.name||''),
+        String(p.accountNo||c?.accountNo||''),
+        String(p.reference||''),
+        Number(p.amount||0),
+        Number(p.balanceAfter||0),
+        String(p.issuedBy||'-')
+      ]);
+    });
 
-  // Page/print metadata recognized by spreadsheet apps that support it.
-  ws['!margins'] = {left:0.3,right:0.3,top:0.5,bottom:0.5,header:0.2,footer:0.2};
+    const dws=XLSX.utils.aoa_to_sheet(detail);
+    dws['!cols']=[
+      {wch:15},{wch:18},{wch:28},{wch:18},
+      {wch:28},{wch:17},{wch:22},{wch:24}
+    ];
+    formatMoneyColumn(dws,5);
+    formatMoneyColumn(dws,6);
+    XLSX.utils.book_append_sheet(wb,dws,'Payment Audit');
 
-  // Keep dates as readable text; never allow Excel serial numbers or ####.
-  if(type === 'monthly' && dataStartRow <= dataEndRow){
-    for(let r=dataStartRow;r<=dataEndRow;r++){
-      const dc = ws[XLSX.utils.encode_cell({r,c:0})];
-      if(dc){ dc.t='s'; dc.z='@'; }
-    }
-  }
+    addCollectorSummary(yearPayments,'Collector Summary',year);
+    addOutstandingSheet();
 
-  // Currency cells.
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  for(let r=0;r<=range.e.r;r++){
-    const cell = ws[XLSX.utils.encode_cell({r,c:moneyCol})];
-    if(cell && typeof cell.v === 'number'){
-      cell.z = '₱#,##0.00';
-    }
-  }
-
-  // Set readable text formats on receipt/account/reference columns.
-  if(type === 'monthly' && dataStartRow <= dataEndRow){
-    [1,3,4].forEach(c=>{
-      for(let r=dataStartRow;r<=dataEndRow;r++){
-        const cell = ws[XLSX.utils.encode_cell({r,c})];
-        if(cell){ cell.t='s'; cell.z='@'; }
-      }
+    wb.Props={
+      Title:`NetBill Yearly Collection Report - ${year}`,
+      Subject:'Complete Collection, Outstanding Balance, and Collector Audit Report',
+      Author:'NetBill - CM Philippines',
+      Company:'CM Philippines'
+    };
+    XLSX.writeFile(wb,`NetBill_Yearly_Report_${year}.xlsx`,{
+      bookType:'xlsx',compression:true,cellStyles:true
     });
   }
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, type === 'monthly' ? `${monthName} ${year}` : `Year ${year}`);
-
-  // Workbook properties.
-  wb.Props = {
-    Title: type === 'monthly' ? `NetBill Monthly Collection Report - ${monthName} ${year}` : `NetBill Yearly Collection Report - ${year}`,
-    Subject: 'Internet Billing Collection Report',
-    Author: 'NetBill - CM Philippines',
-    Company: 'CM Philippines'
-  };
-
-  XLSX.writeFile(wb, filename, {bookType:'xlsx', compression:true, cellStyles:true});
 }
 
 function renderOverdueCustomers(){
@@ -884,10 +968,15 @@ $('recordPaymentBtn').addEventListener('click',()=>{
   const amount = Number($('paymentAmount').value || 0);
   const date = $('paymentDate').value || todayISO();
   const reference = $('paymentReference').value.trim();
+  const issuedBy = $('paymentIssuedBy')?.value.trim() || '';
   const c = customers.find(x=>x.id===customerId);
 
   if(!c || amount <= 0){
     alert('Select a customer and enter a valid payment amount.');
+    return;
+  }
+  if(!issuedBy){
+    alert('Please enter the name of the collector.');
     return;
   }
 
@@ -906,6 +995,7 @@ $('recordPaymentBtn').addEventListener('click',()=>{
     amount,
     date,
     reference,
+    issuedBy,
     balanceAfter: c.balance
   };
   payments.push(payment);
@@ -923,6 +1013,7 @@ $('recordPaymentBtn').addEventListener('click',()=>{
 
   $('paymentAmount').value = '';
   $('paymentReference').value = '';
+  if($('paymentIssuedBy')) $('paymentIssuedBy').value = '';
   renderAll();
   showReceipt(payment.receiptNo);
 });
@@ -944,6 +1035,7 @@ window.showReceipt = receiptNo => {
       <div class="receipt-row"><span>Customer</span><strong>${p.customerName}</strong></div>
       <div class="receipt-row"><span>Plan</span><strong>${c?.plan || '-'}</strong></div>
       <div class="receipt-row"><span>Reference</span><strong>${p.reference || '-'}</strong></div>
+      <div class="receipt-row"><span>Payment Received By</span><strong>${p.issuedBy || '-'}</strong></div>
       <div class="receipt-row receipt-total"><span>Amount Paid</span><strong>${money(p.amount)}</strong></div>
       <div class="receipt-row"><span>Remaining Balance</span><strong>${money(p.balanceAfter)}</strong></div>
       <br>
@@ -954,7 +1046,41 @@ window.showReceipt = receiptNo => {
 };
 
 $('closeReceiptBtn').addEventListener('click',()=>$('receiptModal').classList.add('hidden'));
-$('printReceiptBtn').addEventListener('click',()=>window.print());
+if($('downloadReceiptBtn')){
+  $('downloadReceiptBtn').addEventListener('click', async ()=>{
+    const receipt = $('receiptContent');
+    if(!receipt) return;
+    if(typeof html2canvas === 'undefined'){
+      alert('Receipt downloader is still loading. Please try again.');
+      return;
+    }
+
+    const btn = $('downloadReceiptBtn');
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Preparing Receipt...';
+
+    try{
+      const canvas = await html2canvas(receipt, {
+        backgroundColor:'#ffffff',
+        scale:2,
+        useCORS:true
+      });
+      const receiptNo = receipt.querySelector('.receipt-row strong')?.textContent || 'Receipt';
+      const link = document.createElement('a');
+      link.download = `NetBill_${receiptNo.replace(/[^A-Za-z0-9_-]/g,'_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }catch(e){
+      alert('Unable to download the receipt. Please try again.');
+    }finally{
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+  });
+}
 
 $('customerSearch').addEventListener('input',renderCustomers);
 $('statusFilter').addEventListener('change',renderCustomers);

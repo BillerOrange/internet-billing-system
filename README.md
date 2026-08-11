@@ -130,3 +130,35 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Yearly report: January-December collection summary
 - Separate worksheet name based on selected reporting period
 - Cleaner print/export layout for Excel and WPS Office
+
+## v19 Downloadable Payment Receipt
+- Print Receipt replaced by Download Receipt
+- Receipt downloads as PNG for easy sending by email or messaging/social apps
+- Added required Issued / Processed By on every new payment
+- Issued / Processed By is saved in payment history and shown on the receipt
+- Existing Billing, Ledger, Monthly/Yearly Reports and XLSX reports retained
+
+## v20 Audit-Ready Collection Reports
+- Monthly report now includes Issued / Processed By for every payment
+- Monthly XLSX includes a separate Collector Audit worksheet
+- Yearly XLSX includes detailed Payment Audit worksheet
+- Yearly XLSX includes Collector Summary with payment count and total collected per staff/collector
+- Supports audit, reconciliation, inventory, and collection accountability
+
+## v21 Final Receipt + Audit Layout
+- Payment form uses required Collected By
+- Receipt shows Payment Received By
+- Receipt uses Download Receipt instead of Print
+- Monthly XLSX detailed columns: Date, Receipt No., Client, Account No., Reference, Amount, Collected By
+- Yearly Payment Audit uses the exact same detailed column order
+- Collected By is always the last detailed column
+- Monthly Collector Audit and Yearly Collector Summary retained
+
+## v22 Complete Audit Reports
+- Monthly and yearly detailed payment reports now include Outstanding Balance after each payment
+- Detailed columns: Date, Receipt No., Client, Account No., Reference, Amount Paid, Outstanding Balance, Collected By
+- Collected By remains the last column
+- Monthly and yearly workbooks include a separate Current Outstanding Balances sheet
+- Outstanding Balances sheet includes Account No., Client, Status, Due Date, and current outstanding balance
+- Collector Audit/Summary retained
+- Downloadable receipt and Payment Received By retained
