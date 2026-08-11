@@ -909,7 +909,7 @@ $('quickAddBtn').addEventListener('click',()=>openCustomerModal());
 $('closeCustomerModal').addEventListener('click',closeCustomerModal);
 $('cancelCustomerBtn').addEventListener('click',closeCustomerModal);
 
-$('saveCustomerBtn').addEventListener('click',()=>{
+$('saveCustomerBtn').addEventListener('click', async ()=>{
   const accountNo = $('accountNo').value.trim();
   const name = $('customerName').value.trim();
   const address = $('customerAddress').value.trim();
@@ -924,46 +924,40 @@ $('saveCustomerBtn').addEventListener('click',()=>{
     return;
   }
 
-  const duplicate = customers.find(c => c.accountNo.toLowerCase() === accountNo.toLowerCase() && c.id !== editingCustomerId);
-  if(duplicate){
-    alert('Account number already exists.');
+  const customerData = {
+    account_no: accountNo,
+    name: name,
+    address: address,
+    contact_no: contact,
+    monthly_plan: fee,
+    activation_date: activationDate || null,
+    due_date: dueDate || null,
+    is_active: true
+  };
+
+  let result;
+
+  if(editingCustomerId){
+    result = await supabaseClient
+      .from('clients')
+      .update(customerData)
+      .eq('id', editingCustomerId)
+      .select();
+  } else {
+    result = await supabaseClient
+      .from('clients')
+      .insert([customerData])
+      .select();
+  }
+
+  if(result.error){
+    console.error(result.error);
+    alert('Error saving customer: ' + result.error.message);
     return;
   }
 
-  if(editingCustomerId){
-    const c = customers.find(x=>x.id===editingCustomerId);
-    Object.assign(c,{accountNo,name,address,contact,plan,fee,activationDate,dueDate});
-  } else {
-    const newCustomer = {
-      id: Date.now(),
-      accountNo,name,address,contact,plan,fee,activationDate,dueDate,
-      currentBill: fee,
-      balance: fee
-    };
-    customers.push(newCustomer);
-    const initialPaymentStatus = document.getElementById('initialPaymentStatus')?.value || 'unpaid';
-
-    if(initialPaymentStatus === 'paid'){
-      // Paid upon activation: record ONE combined ledger entry only.
-      recordInitialActivationPayment(newCustomer, initialPaymentStatus);
-    } else {
-      // Unpaid upon activation: keep the initial bill as an outstanding balance.
-      addLedgerEntry({
-        customerId: newCustomer.id,
-        date: activationDate || todayISO(),
-        type: 'Bill',
-        description: 'Initial monthly bill',
-        previousBalance: 0,
-        charge: fee,
-        payment: 0,
-        runningBalance: fee,
-        reference: dueDate ? `Due ${dueDate}` : ''
-      });
-    }
-  }
-
+  alert('Customer saved successfully.');
   closeCustomerModal();
-  renderAll();
 });
 
 $('createBillBtn').addEventListener('click',()=>{
