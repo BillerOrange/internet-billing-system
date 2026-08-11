@@ -6,8 +6,24 @@
   <title>Internet Billing System</title>
   <link rel="stylesheet" href="style.css?v=22" />
 </head>
-<body>
-  <div class="app-shell">
+<body><div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h1>NetBill</h1>
+    <p>Internet Billing System</p>
+
+    <label>Email
+      <input id="loginEmail" type="email" placeholder="Enter email" />
+    </label>
+
+    <label>Password
+      <input id="loginPassword" type="password" placeholder="Enter password" />
+    </label>
+
+    <button id="loginBtn" class="primary">Login</button>
+    <p id="loginMessage" class="login-message"></p>
+  </div>
+</div>
+  <div id="appShell" class="app-shell hidden">
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark">NB</div>
