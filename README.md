@@ -52,3 +52,8 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Ledger automatically selects a customer
 - Fixed customer/account/balance summary
 - Rebuilt Ledger transactions as mobile-friendly cards on phones
+
+## v5.1 Fix
+- Ensured `Powered by CM Philippines` is visibly placed under Internet Billing.
+- CM Philippines is italicized.
+- Retains the v5 Ledger fixes.
