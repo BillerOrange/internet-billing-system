@@ -244,3 +244,44 @@ label{display:flex;flex-direction:column;gap:6px;font-size:14px}
   font-size: 9px !important;
   font-style: italic !important;
 }
+
+/* Final developer-credit sizing fix */
+.brand div.powered-by,
+.sidebar .brand div.powered-by{
+  font-size:9px !important;
+  line-height:1.1 !important;
+  margin-top:2px !important;
+  font-weight:400 !important;
+  color:#9ca3af !important;
+}
+.brand div.powered-by em,
+.sidebar .brand div.powered-by em{
+  font-size:9px !important;
+  font-style:italic !important;
+  font-weight:500 !important;
+}
+
+/* Match developer credit to Internet Billing text exactly */
+.brand .powered-by{
+  margin-top:3px !important;
+  font-size:13px !important;
+  line-height:normal !important;
+  color:#9ca3af !important;
+  font-weight:400 !important;
+  letter-spacing:0 !important;
+}
+.brand .powered-by em{
+  font-size:13px !important;
+  font-style:italic !important;
+  font-weight:400 !important;
+  color:#9ca3af !important;
+}
+@media(max-width:760px){
+  .brand .powered-by{
+    font-size:12px !important;
+    margin-top:2px !important;
+  }
+  .brand .powered-by em{
+    font-size:12px !important;
+  }
+}
