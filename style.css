@@ -66,3 +66,82 @@ label{display:flex;flex-direction:column;gap:6px;font-size:14px}
   #receiptContent{position:absolute;left:0;top:0;width:100%;padding:24px}
   .no-print{display:none!important}
 }
+
+/* v3 mobile navigation and layout improvements */
+@media(max-width:760px){
+  .sidebar{
+    padding:14px 16px 12px;
+  }
+  .brand{
+    margin-bottom:14px;
+  }
+  .brand-mark{
+    width:40px;
+    height:40px;
+    border-radius:10px;
+  }
+  .brand h1{
+    font-size:21px;
+  }
+  .brand p{
+    font-size:12px;
+    margin-top:2px;
+  }
+  .sidebar nav{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:6px;
+    overflow-x:auto;
+  }
+  .nav-btn{
+    min-width:0;
+    padding:9px 5px;
+    font-size:12px;
+    border-radius:8px;
+    white-space:nowrap;
+  }
+  .main-content{
+    padding:16px;
+  }
+  .topbar{
+    margin-bottom:16px;
+  }
+  .topbar h2{
+    font-size:25px;
+  }
+  .topbar p{
+    font-size:14px;
+    line-height:1.4;
+  }
+  .cards{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+  .card{
+    padding:16px;
+    border-radius:12px;
+  }
+  .metric span{
+    font-size:13px;
+  }
+  .metric strong{
+    font-size:24px;
+  }
+  .section-head{
+    align-items:flex-start;
+  }
+  .section-head .primary{
+    flex-shrink:0;
+  }
+  .form-grid{
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:420px){
+  .sidebar nav{
+    grid-template-columns:repeat(3,1fr);
+  }
+  .cards{
+    grid-template-columns:1fr 1fr;
+  }
+}

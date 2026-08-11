@@ -31,3 +31,10 @@ Upload these files to the root of your GitHub repository:
 - README.md
 
 GitHub Pages can then publish the site directly from the `main` branch and `/(root)` folder.
+
+
+## v3 Update
+- More compact mobile navigation
+- Improved mobile dashboard spacing
+- Two-column mobile metric cards
+- Better phone-friendly forms and typography
