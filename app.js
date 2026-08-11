@@ -17,7 +17,9 @@ async function loginUser() {
     message.textContent = 'Invalid email or password.';
     return;
   }
-
+await loadCustomersFromSupabase();
+renderAll();
+  
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
   message.textContent = '';
@@ -60,11 +62,35 @@ const seedCustomers = [
   }
 ];
 
-let customers = JSON.parse(localStorage.getItem('nb_customers') || 'null') || seedCustomers;
+let customers = [];
 let payments = JSON.parse(localStorage.getItem('nb_payments') || '[]');
 let ledgerEntries = JSON.parse(localStorage.getItem('nb_ledger') || '[]');
 let editingCustomerId = null;
+async function loadCustomersFromSupabase() {
+  const { data, error } = await supabaseClient
+    .from('clients')
+    .select('*')
+    .order('created_at', { ascending: true });
 
+  if (error) {
+    console.error('Error loading customers:', error);
+    return;
+  }
+
+  customers = (data || []).map(c => ({
+  id: c.id,
+  accountNo: c.account_no,
+  name: c.name,
+  address: c.address || '',
+  contact: c.contact_no || '',
+  plan: c.internet_plan || '',
+  fee: Number(c.monthly_rate || 0),
+  activationDate: c.activation_date || '',
+  dueDate: c.due_date || '',
+  currentBill: Number(c.current_bill || 0),
+  balance: Number(c.balance || 0)
+}));
+}
 const $ = id => document.getElementById(id);
 const todayISO = () => new Date().toISOString().slice(0,10);
 const money = value => '₱' + Number(value || 0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -925,15 +951,18 @@ $('saveCustomerBtn').addEventListener('click', async ()=>{
   }
 
   const customerData = {
-    account_no: accountNo,
-    name: name,
-    address: address,
-    contact_no: contact,
-    monthly_plan: fee,
-    activation_date: activationDate || null,
-    due_date: dueDate || null,
-    is_active: true
-  };
+  account_no: accountNo,
+  name: name,
+  address: address,
+  contact_no: contact,
+  internet_plan: plan,
+  monthly_rate: fee,
+  activation_date: activationDate || null,
+  due_date: dueDate || null,
+  current_bill: fee,
+  balance: fee,
+  is_active: true
+};
 
   let result;
 
@@ -957,11 +986,15 @@ $('saveCustomerBtn').addEventListener('click', async ()=>{
   }
 
   alert('Customer saved successfully.');
+  
+  await loadCustomersFromSupabase();
+renderAll();
+  
   closeCustomerModal();
 });
 
 $('createBillBtn').addEventListener('click',()=>{
-  const customerId = Number($('billCustomer').value);
+  const customerId = $('billCustomer').value;
   const amount = Number($('billAmount').value || 0);
   const dueDate = $('billDueDate').value;
   const c = customers.find(x=>x.id===customerId);
@@ -991,7 +1024,7 @@ $('createBillBtn').addEventListener('click',()=>{
 });
 
 $('recordPaymentBtn').addEventListener('click',()=>{
-  const customerId = Number($('paymentCustomer').value);
+  const customerId = $('paymentCustomer').value;
   const amount = Number($('paymentAmount').value || 0);
   const date = $('paymentDate').value || todayISO();
   const reference = $('paymentReference').value.trim();
