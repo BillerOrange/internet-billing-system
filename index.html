@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Internet Billing System</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <h1>NetBill</h1>
+      <nav>
+        <button class="nav-btn active" data-section="dashboard">Dashboard</button>
+        <button class="nav-btn" data-section="customers">Customers</button>
+        <button class="nav-btn" data-section="payments">Payments</button>
+        <button class="nav-btn" data-section="reports">Reports</button>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section id="dashboard" class="section active">
+        <h2>Dashboard</h2>
+        <div class="cards">
+          <div class="card"><span>Total Customers</span><strong id="totalCustomers">0</strong></div>
+          <div class="card"><span>Active Accounts</span><strong id="activeCustomers">0</strong></div>
+          <div class="card"><span>Unpaid Accounts</span><strong id="unpaidCustomers">0</strong></div>
+          <div class="card"><span>Total Collected</span><strong id="totalCollected">₱0.00</strong></div>
+        </div>
+      </section>
+
+      <section id="customers" class="section">
+        <div class="section-head">
+          <h2>Customers</h2>
+          <button id="addCustomerBtn" class="primary">+ Add Customer</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Plan</th>
+                <th>Monthly Fee</th>
+                <th>Status</th>
+                <th>Due Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="customerTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="payments" class="section">
+        <h2>Payments</h2>
+        <div class="form-card">
+          <label>Customer
+            <select id="paymentCustomer"></select>
+          </label>
+          <label>Amount
+            <input id="paymentAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+          </label>
+          <label>Date
+            <input id="paymentDate" type="date" />
+          </label>
+          <button id="recordPaymentBtn" class="primary">Record Payment</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Amount</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="paymentTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="reports" class="section">
+        <h2>Reports</h2>
+        <div class="cards">
+          <div class="card"><span>Total Payments</span><strong id="reportPayments">0</strong></div>
+          <div class="card"><span>Total Revenue</span><strong id="reportRevenue">₱0.00</strong></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="customerModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>Add Customer</h3>
+      <label>Name
+        <input id="customerName" type="text" />
+      </label>
+      <label>Plan
+        <input id="customerPlan" type="text" placeholder="e.g. 50 Mbps" />
+      </label>
+      <label>Monthly Fee
+        <input id="customerFee" type="number" min="0" step="0.01" />
+      </label>
+      <label>Due Date
+        <input id="customerDue" type="date" />
+      </label>
+      <div class="modal-actions">
+        <button id="cancelCustomerBtn">Cancel</button>
+        <button id="saveCustomerBtn" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

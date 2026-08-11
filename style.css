@@ -1,0 +1,30 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#1f2937}
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;background:#111827;color:#fff;padding:24px 16px}
+.sidebar h1{margin:0 0 24px;font-size:24px}
+.sidebar nav{display:flex;flex-direction:column;gap:10px}
+.nav-btn{background:transparent;color:#d1d5db;border:0;text-align:left;padding:12px;border-radius:8px;cursor:pointer}
+.nav-btn:hover,.nav-btn.active{background:#2563eb;color:#fff}
+.content{flex:1;padding:28px}
+.section{display:none}.section.active{display:block}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.card,.form-card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.card span{display:block;color:#6b7280;margin-bottom:8px}.card strong{font-size:28px}
+.primary{background:#2563eb;color:#fff;border:0;padding:10px 16px;border-radius:8px;cursor:pointer}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left}
+th{background:#f9fafb}
+.table-wrap{overflow:auto;background:#fff;border-radius:12px;margin-top:16px}
+.status{padding:5px 9px;border-radius:999px;font-size:12px}
+.status.active{background:#dcfce7;color:#166534}.status.unpaid{background:#fee2e2;color:#991b1b}
+.form-card{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;align-items:end}
+label{display:flex;flex-direction:column;gap:6px;font-size:14px}
+input,select{padding:10px;border:1px solid #d1d5db;border-radius:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal.hidden{display:none}
+.modal-box{background:#fff;width:min(420px,100%);padding:22px;border-radius:12px;display:grid;gap:14px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px}
+.modal-actions button{padding:9px 14px;border-radius:8px;border:1px solid #d1d5db;cursor:pointer}
+@media(max-width:700px){.app{display:block}.sidebar{width:100%}.sidebar nav{flex-direction:row;flex-wrap:wrap}.content{padding:18px}}
