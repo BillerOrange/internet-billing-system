@@ -99,3 +99,6 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Duplicate paid-activation initial bills are cleaned on every render.
 - Customer deletion now also removes that customer's payment and ledger history.
 - Existing recurring July/August bills remain intact.
+
+## v13
+- Payment receipt now displays internet plans with Mbps (example: 50 Mbps).
