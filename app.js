@@ -304,16 +304,23 @@ function recordInitialActivationPayment(customer, status){
 function cleanupPaidActivationDuplicates(){
   const paidKeys = new Set(
     ledgerEntries
-      .filter(e => e.type === 'Activation Bill (Paid)')
+      .filter(e =>
+        String(e.type || '').toLowerCase().includes('activation') &&
+        String(e.type || '').toLowerCase().includes('paid')
+      )
       .map(e => `${e.customerId}|${e.date}`)
   );
 
   for(let i = ledgerEntries.length - 1; i >= 0; i--){
     const e = ledgerEntries[i];
+    const key = `${e.customerId}|${e.date}`;
+    const desc = String(e.description || '').trim().toLowerCase();
+    const type = String(e.type || '').trim().toLowerCase();
+
     if(
-      e.type === 'Bill' &&
-      e.description === 'Initial monthly bill' &&
-      paidKeys.has(`${e.customerId}|${e.date}`)
+      paidKeys.has(key) &&
+      type === 'bill' &&
+      (desc === 'initial monthly bill' || desc.includes('initial monthly'))
     ){
       ledgerEntries.splice(i, 1);
     }
@@ -439,6 +446,7 @@ function fillCustomerSelects(){
 }
 
 function renderAll(){
+  cleanupPaidActivationDuplicates();
   renderDashboard();
   renderCustomers();
   renderBilling();
@@ -471,8 +479,10 @@ window.editCustomer = id => {
 window.deleteCustomer = id => {
   const c = customers.find(x=>x.id===id);
   if(!c) return;
-  if(confirm(`Delete ${c.name}?`)){
+  if(confirm(`Delete ${c.name}? This will also remove this customer's payment and ledger history.`)){
     customers = customers.filter(x=>x.id!==id);
+    payments = payments.filter(p=>p.customerId!==id);
+    ledgerEntries = ledgerEntries.filter(e=>e.customerId!==id);
     renderAll();
   }
 };

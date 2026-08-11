@@ -93,3 +93,9 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Cleanup also runs at startup, so duplicate activation entries created by earlier v10 tests are cleaned from the ledger.
 - July/August recurring bills are preserved.
 - Customer running balance is not reduced a second time.
+
+## v12 Cache + Ledger Fix
+- Forces GitHub Pages/browser to load the new app.js and style.css using cache-busting query strings.
+- Duplicate paid-activation initial bills are cleaned on every render.
+- Customer deletion now also removes that customer's payment and ledger history.
+- Existing recurring July/August bills remain intact.
