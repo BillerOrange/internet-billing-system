@@ -18,6 +18,7 @@ async function loginUser() {
     return;
   }
 await loadCustomersFromSupabase();
+await loadBillingAndPaymentsFromSupabase();
 renderAll();
   
   document.getElementById('loginScreen').classList.add('hidden');
@@ -36,8 +37,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (session) {
     await loadCustomersFromSupabase();
-    renderAll();
-
+await loadBillingAndPaymentsFromSupabase();
+renderAll();
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appShell').classList.remove('hidden');
   }
