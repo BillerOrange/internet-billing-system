@@ -32,6 +32,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (loginBtn) {
     loginBtn.addEventListener('click', loginUser);
   }
+  const logoutBtn = document.getElementById('logoutBtn');
+
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        await supabaseClient.auth.signOut();
+        document.getElementById('appShell').classList.add('hidden');
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('loginPassword').value = '';
+    });
+}
 
   const { data: { session } } = await supabaseClient.auth.getSession();
 
