@@ -230,6 +230,49 @@ function addMonthsClamped(date, months){
   return target;
 }
 
+
+function recordInitialActivationPayment(customer, status){
+  if(!customer || status !== 'paid') return;
+
+  const amount = Number(customer.fee || 0);
+  if(amount <= 0) return;
+
+  const activationDate = customer.activationDate || todayISO();
+  const paymentKey = `ACTIVATION-PAID-${customer.id}`;
+
+  const alreadyRecorded = payments.some(p => p.reference === paymentKey) ||
+    ledgerEntries.some(e => e.reference === paymentKey);
+  if(alreadyRecorded) return;
+
+  const previousBalance = Number(customer.balance || 0);
+  const paymentAmount = Math.min(amount, previousBalance);
+  if(paymentAmount <= 0) return;
+
+  customer.balance = Math.max(0, previousBalance - paymentAmount);
+
+  const receiptNo = `RCPT-${String(payments.length + 1).padStart(5,'0')}`;
+  payments.push({
+    id: Date.now() + Math.random(),
+    customerId: customer.id,
+    date: activationDate,
+    amount: paymentAmount,
+    reference: paymentKey,
+    receiptNo
+  });
+
+  addLedgerEntry({
+    customerId: customer.id,
+    date: activationDate,
+    type: 'Payment',
+    description: 'Paid upon activation',
+    previousBalance,
+    charge: 0,
+    payment: paymentAmount,
+    runningBalance: customer.balance,
+    reference: paymentKey
+  });
+}
+
 function runAutomaticMonthlyBilling(){
   const today = parseLocalDate(todayISO());
   if(!today) return;
@@ -429,6 +472,10 @@ $('saveCustomerBtn').addEventListener('click',()=>{
       balance: fee
     };
     customers.push(newCustomer);
+    const initialPaymentStatus = document.getElementById('initialPaymentStatus')?.value || 'unpaid';
+    const newlyAddedCustomer = customers[customers.length - 1];
+    recordInitialActivationPayment(newlyAddedCustomer, initialPaymentStatus);
+
     addLedgerEntry({
       customerId: newCustomer.id,
       date: activationDate || todayISO(),

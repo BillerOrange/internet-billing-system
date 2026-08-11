@@ -67,3 +67,10 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Each billing cycle has a unique ledger reference so refreshing the page will not duplicate a bill.
 - Monthly charges are added to any unpaid previous balance.
 - Automatic charges appear in the customer ledger.
+
+## v8 Initial Payment Status
+- New customers can be marked Paid upon activation or Unpaid.
+- Paid upon activation records an activation-date payment in Payments and Ledger.
+- The activation payment reduces the activation bill so it is not carried as unpaid balance.
+- Unpaid keeps the activation bill in the running balance.
+- Recurring monthly billing continues on the customer's activation-day cycle.
