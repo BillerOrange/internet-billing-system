@@ -74,3 +74,10 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - The activation payment reduces the activation bill so it is not carried as unpaid balance.
 - Unpaid keeps the activation bill in the running balance.
 - Recurring monthly billing continues on the customer's activation-day cycle.
+
+## v9 Clean Activation Ledger
+- Paid-upon-activation customers now get ONE activation ledger entry.
+- The entry shows both Charge and Payment on the same card.
+- Running balance after a paid activation is zero.
+- The separate same-date Initial Bill card is removed for new customers.
+- July/August and future recurring monthly bills remain separate ledger entries.

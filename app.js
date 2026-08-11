@@ -244,9 +244,22 @@ function recordInitialActivationPayment(customer, status){
     ledgerEntries.some(e => e.reference === paymentKey);
   if(alreadyRecorded) return;
 
+  // The customer creation flow already creates the initial activation bill.
+  // Remove that separate ledger card and replace it with one combined
+  // "Activation Bill (Paid)" transaction.
+  const initialIndex = ledgerEntries.findIndex(e =>
+    e.customerId === customer.id &&
+    e.date === activationDate &&
+    e.type === 'Bill' &&
+    (e.description === 'Initial monthly bill' || String(e.reference || '').startsWith('Due '))
+  );
+
+  if(initialIndex >= 0){
+    ledgerEntries.splice(initialIndex, 1);
+  }
+
   const previousBalance = Number(customer.balance || 0);
-  const paymentAmount = Math.min(amount, previousBalance);
-  if(paymentAmount <= 0) return;
+  const paymentAmount = Math.min(amount, previousBalance || amount);
 
   customer.balance = Math.max(0, previousBalance - paymentAmount);
 
@@ -263,12 +276,12 @@ function recordInitialActivationPayment(customer, status){
   addLedgerEntry({
     customerId: customer.id,
     date: activationDate,
-    type: 'Payment',
-    description: 'Paid upon activation',
-    previousBalance,
-    charge: 0,
-    payment: paymentAmount,
-    runningBalance: customer.balance,
+    type: 'Activation Bill (Paid)',
+    description: 'Activation monthly bill paid upon activation',
+    previousBalance: 0,
+    charge: amount,
+    payment: amount,
+    runningBalance: 0,
     reference: paymentKey
   });
 }
