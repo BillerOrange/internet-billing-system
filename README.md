@@ -1,19 +1,33 @@
-# Internet Billing System
+# Internet Billing System v2
 
-A simple browser-based Internet Billing System built with HTML, CSS, and JavaScript.
+A browser-based Internet Billing Management System using HTML, CSS, and JavaScript.
 
 ## Features
-- Dashboard summary
-- Add and delete customers
-- Internet plan and monthly fee tracking
-- Active / unpaid status
+- Dashboard overview
+- Customer account number
+- Customer name, address, and contact
+- Internet plan and monthly rate
+- Activation date and billing due date
+- Create/update monthly bill
+- Automatic Paid / Unpaid / Overdue status
+- Current balance tracking
 - Record customer payments
 - Payment history
-- Revenue summary
+- Receipt number generation
+- Printable payment receipt
+- Search and status filter
+- Reports and receivables summary
 - LocalStorage data persistence
 
 ## How to Run
-1. Extract the ZIP file.
+1. Extract the ZIP.
 2. Open `index.html` in a browser.
 
-No installation is required.
+## GitHub Pages
+Upload these files to the root of your GitHub repository:
+- index.html
+- style.css
+- app.js
+- README.md
+
+GitHub Pages can then publish the site directly from the `main` branch and `/(root)` folder.
