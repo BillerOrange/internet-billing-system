@@ -232,25 +232,15 @@ label{display:flex;flex-direction:column;gap:6px;font-size:14px}
   }
 }
 
-/* v5.1 visible brand credit */
-.brand .powered-by{
-  display:block !important;
-  visibility:visible !important;
-  opacity:1 !important;
-  margin-top:4px;
-  font-size:11px;
-  line-height:1.25;
-  color:#aeb7c7;
-  white-space:nowrap;
+/* Small developer credit */
+.powered-by,
+.brand .powered-by {
+  font-size: 9px !important;
+  line-height: 1.15 !important;
+  margin-top: 2px !important;
 }
-.brand .powered-by em{
-  font-style:italic;
-  font-weight:600;
-  color:#d8deea;
-}
-@media(max-width:760px){
-  .brand .powered-by{
-    font-size:10px;
-    margin-top:3px;
-  }
+.powered-by em,
+.brand .powered-by em {
+  font-size: 9px !important;
+  font-style: italic !important;
 }
