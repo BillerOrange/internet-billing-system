@@ -74,6 +74,28 @@ const seedCustomers = [
 
 let customers = [];
 let payments = JSON.parse(localStorage.getItem('nb_payments') || '[]');
+async function loadBillingAndPaymentsFromSupabase() {
+  const { data: billingData, error: billingError } = await supabaseClient
+    .from('billing')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (billingError) {
+    console.error('Error loading billing:', billingError);
+  }
+
+  const { data: paymentData, error: paymentError } = await supabaseClient
+    .from('payments')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (paymentError) {
+    console.error('Error loading payments:', paymentError);
+  }
+
+  console.log('Billing loaded:', billingData);
+  console.log('Payments loaded:', paymentData);
+}
 let ledgerEntries = JSON.parse(localStorage.getItem('nb_ledger') || '[]');
 let editingCustomerId = null;
 async function loadCustomersFromSupabase() {
