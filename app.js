@@ -508,7 +508,7 @@ function renderLedger(){
   const select = $('ledgerCustomer');
   if(!select) return;
   const customerId = select.value || customers[0]?.id || '';
-  const c = customers.find(x=>x.id===customerId);
+  const c = customers.find(x => String(x.id) === String(customerId));
 
   if(!c){
     $('ledgerName').textContent = '-';
