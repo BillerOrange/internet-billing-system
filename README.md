@@ -59,3 +59,11 @@ GitHub Pages can then publish the site directly from the `main` branch and `/(ro
 - Existing balances are not changed.
 - Migration runs once per browser/device.
 - Future bills and payments continue to record directly to the ledger.
+
+## v7 Automatic Monthly Billing
+- Monthly charge is generated automatically from the customer's activation-date cycle.
+- First recurring charge is one month after activation.
+- Missed months are caught up automatically when the system opens.
+- Each billing cycle has a unique ledger reference so refreshing the page will not duplicate a bill.
+- Monthly charges are added to any unpaid previous balance.
+- Automatic charges appear in the customer ledger.

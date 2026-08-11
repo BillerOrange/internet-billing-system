@@ -208,6 +208,76 @@ function migrateExistingLedgerData(){
   saveData();
 }
 
+
+function parseLocalDate(iso){
+  if(!iso) return null;
+  const [y,m,d] = iso.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+function toISODateLocal(date){
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function addMonthsClamped(date, months){
+  const originalDay = date.getDate();
+  const target = new Date(date.getFullYear(), date.getMonth() + months, 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth()+1, 0).getDate();
+  target.setDate(Math.min(originalDay, lastDay));
+  return target;
+}
+
+function runAutomaticMonthlyBilling(){
+  const today = parseLocalDate(todayISO());
+  if(!today) return;
+
+  customers.forEach(c => {
+    const activation = parseLocalDate(c.activationDate);
+    if(!activation || Number(c.fee || 0) <= 0) return;
+
+    // First recurring monthly bill is one month after activation.
+    let cycleDate = addMonthsClamped(activation, 1);
+    let safety = 0;
+
+    while(cycleDate <= today && safety < 240){
+      const cycleISO = toISODateLocal(cycleDate);
+      const cycleKey = `AUTO-${c.id}-${cycleISO}`;
+
+      const alreadyBilled = ledgerEntries.some(e =>
+        e.customerId === c.id && e.reference === cycleKey
+      );
+
+      if(!alreadyBilled){
+        const previousBalance = Number(c.balance || 0);
+        const charge = Number(c.fee || 0);
+        c.currentBill = charge;
+        c.balance = previousBalance + charge;
+        c.dueDate = cycleISO;
+
+        addLedgerEntry({
+          customerId: c.id,
+          date: cycleISO,
+          type: 'Bill',
+          description: 'Automatic monthly internet bill',
+          previousBalance,
+          charge,
+          payment: 0,
+          runningBalance: c.balance,
+          reference: cycleKey
+        });
+      }
+
+      cycleDate = addMonthsClamped(cycleDate, 1);
+      safety++;
+    }
+  });
+
+  saveData();
+}
+
 function renderLedger(){
   const select = $('ledgerCustomer');
   if(!select) return;
@@ -502,4 +572,5 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
 });
 
 migrateExistingLedgerData();
+runAutomaticMonthlyBilling();
 renderAll();
