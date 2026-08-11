@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
+      alert('LOGOUT BUTTON WORKING');
         const { error } = await supabaseClient.auth.signOut();
 
         if (error) {
