@@ -22,7 +22,18 @@ await loadBillingAndPaymentsFromSupabase();
 renderAll();
   
   document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('appShell').classList.remove('hidden');
+
+const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
+if (isStandalone) {
+    document.getElementById('installGate')?.classList.add('hidden');
+    document.getElementById('appShell')?.classList.remove('hidden');
+} else {
+    document.getElementById('appShell')?.classList.add('hidden');
+    document.getElementById('installGate')?.classList.remove('hidden');
+}
   message.textContent = '';
 }
 
