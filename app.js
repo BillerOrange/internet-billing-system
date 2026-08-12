@@ -247,8 +247,8 @@ function renderCustomers(){
       <td>${statusBadge(getStatus(c))}</td>
       <td>
         <div class="action-group">
-          <button class="small-btn" onclick="editCustomer(${c.id})">Edit</button>
-          <button class="small-btn danger" onclick="deleteCustomer(${c.id})">Delete</button>
+          <button class="small-btn" onclick="editCustomer('${c.id}')">Edit</button>
+<button class="small-btn danger" onclick="deleteCustomer('${c.id}')">Delete</button>
         </div>
       </td>
     </tr>
@@ -998,15 +998,29 @@ window.editCustomer = id => {
   if(c) openCustomerModal(c);
 };
 
-window.deleteCustomer = id => {
-  const c = customers.find(x=>x.id===id);
-  if(!c) return;
-  if(confirm(`Delete ${c.name}? This will also remove this customer's payment and ledger history.`)){
-    customers = customers.filter(x=>x.id!==id);
-    payments = payments.filter(p=>p.customerId!==id);
-    ledgerEntries = ledgerEntries.filter(e=>e.customerId!==id);
-    renderAll();
+window.deleteCustomer = async id => {
+  const c = customers.find(x => x.id == id);
+  if (!c) return;
+
+  if (!confirm(`Delete ${c.name}? This will permanently remove this customer.`)) {
+    return;
   }
+
+  const { error } = await supabaseClient
+    .from('clients')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error(error);
+    alert('Error deleting customer: ' + error.message);
+    return;
+  }
+
+  alert('Customer deleted successfully.');
+
+  await loadCustomersFromSupabase();
+  renderAll();
 };
 
 function closeCustomerModal(){
