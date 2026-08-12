@@ -994,8 +994,14 @@ function openCustomerModal(customer=null){
 }
 
 window.editCustomer = id => {
-  const c = customers.find(x=>x.id===id);
-  if(c) openCustomerModal(c);
+  const c = customers.find(x => String(x.id) === String(id));
+
+  if (!c) {
+    alert('Customer record not found.');
+    return;
+  }
+
+  openCustomerModal(c);
 };
 
 window.deleteCustomer = async id => {
