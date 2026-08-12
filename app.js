@@ -1335,3 +1335,46 @@ runAutomaticMonthlyBilling();
 cleanupPaidActivationDuplicates();
 saveData();
 renderAll();
+
+// NetBill PWA required installation
+let deferredInstallPrompt = null;
+
+function isNetBillInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+
+  const installBtn = document.getElementById('installAppBtn');
+  if (installBtn) {
+    installBtn.disabled = false;
+    installBtn.textContent = 'Install NetBill App';
+  }
+});
+
+const installAppBtn = document.getElementById('installAppBtn');
+
+if (installAppBtn) {
+  installAppBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) {
+      alert('Installation is not ready yet. In Chrome, tap the ⋮ menu, then choose "Install app" or "Install and create shortcut".');
+      return;
+    }
+
+    deferredInstallPrompt.prompt();
+    const result = await deferredInstallPrompt.userChoice;
+
+    if (result.outcome === 'accepted') {
+      deferredInstallPrompt = null;
+    }
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  document.getElementById('installGate')?.classList.add('hidden');
+  document.getElementById('appShell')?.classList.remove('hidden');
+});
