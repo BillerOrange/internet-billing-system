@@ -1269,9 +1269,77 @@ showReceipt(payment.receiptNo);
 });
 
 window.showReceipt = receiptNo => {
-  const p = payments.find(x=>x.receiptNo===receiptNo);
-  if(!p) return;
-  const c = customers.find(x=>x.id===p.customerId);
+  const p = payments.find(x =>
+    x.receiptNo === receiptNo ||
+    x.receipt_no === receiptNo ||
+    String(x.id) === String(receiptNo)
+  );
+
+  if (!p) {
+    alert('Payment record not found.');
+    return;
+  }
+
+  const customerId = p.customerId || p.customer_id || p.client_id;
+
+  const c = customers.find(x =>
+    String(x.id) === String(customerId)
+  ) || {};
+
+  const finalReceiptNo =
+    p.receiptNo ||
+    p.receipt_no ||
+    p.reference_no ||
+    p.reference ||
+    `PAY-${p.id || 'OLD'}`;
+
+  const finalDate =
+    p.date ||
+    p.payment_date ||
+    p.created_at?.split('T')[0] ||
+    '-';
+
+  const finalAccountNo =
+    p.accountNo ||
+    p.account_no ||
+    c.accountNo ||
+    c.account_no ||
+    '-';
+
+  const finalCustomerName =
+    p.customerName ||
+    p.customer_name ||
+    c.name ||
+    '-';
+
+  const finalPlan =
+    p.plan ||
+    c.plan ||
+    '-';
+
+  const finalReference =
+    p.reference ||
+    p.reference_no ||
+    p.payment_method ||
+    'Cash';
+
+  const finalIssuedBy =
+    p.issuedBy ||
+    p.issued_by ||
+    p.collected_by ||
+    p.collector_email ||
+    '-';
+
+  const finalAmount =
+    Number(p.amount || 0);
+
+  const finalBalance =
+    Number(
+      p.balanceAfter ??
+      p.balance_after ??
+      c.balance ??
+      0
+    );
 
   $('receiptContent').innerHTML = `
     <div class="receipt">
@@ -1279,19 +1347,20 @@ window.showReceipt = receiptNo => {
       <div class="center">Internet Billing System</div>
       <div class="center">Official Payment Receipt</div>
       <br>
-      <div class="receipt-row"><span>Receipt No.</span><strong>${p.receiptNo}</strong></div>
-      <div class="receipt-row"><span>Date</span><strong>${p.date}</strong></div>
-      <div class="receipt-row"><span>Account No.</span><strong>${p.accountNo || c?.accountNo || '-'}</strong></div>
-      <div class="receipt-row"><span>Customer</span><strong>${p.customerName || c?.name || '-'}</strong></div>
-      <div class="receipt-row"><span>Plan</span><strong>${c?.plan || p.plan || '-'}</strong></div>
-      <div class="receipt-row"><span>Reference</span><strong>${p.reference || p.receiptNo || '-'}</strong></div>
-      <div class="receipt-row"><span>Payment Received By</span><strong>${p.issuedBy || '-'}</strong></div>
-      <div class="receipt-row receipt-total"><span>Amount Paid</span><strong>${money(p.amount)}</strong></div>
-      <div class="receipt-row"><span>Remaining Balance</span><strong>${money(p.balanceAfter ?? c?.balance ?? 0)}</strong></div>
+      <div class="receipt-row"><span>Receipt No.</span><strong>${finalReceiptNo}</strong></div>
+      <div class="receipt-row"><span>Date</span><strong>${finalDate}</strong></div>
+      <div class="receipt-row"><span>Account No.</span><strong>${finalAccountNo}</strong></div>
+      <div class="receipt-row"><span>Customer</span><strong>${finalCustomerName}</strong></div>
+      <div class="receipt-row"><span>Plan</span><strong>${finalPlan}</strong></div>
+      <div class="receipt-row"><span>Reference</span><strong>${finalReference}</strong></div>
+      <div class="receipt-row"><span>Payment Received By</span><strong>${finalIssuedBy}</strong></div>
+      <div class="receipt-row receipt-total"><span>Amount Paid</span><strong>${money(finalAmount)}</strong></div>
+      <div class="receipt-row"><span>Remaining Balance</span><strong>${money(finalBalance)}</strong></div>
       <br>
       <div class="center">Thank you for your payment.</div>
     </div>
   `;
+
   $('receiptModal').classList.remove('hidden');
 };
 
