@@ -139,7 +139,7 @@ async function loadBillingAndPaymentsFromSupabase() {
     date: String(p.payment_date || '').slice(0, 10),
     reference: p.reference_no || '',
     issuedBy: p.collected_by || '',
-    receiptNo: p.receipt_no || p.reference_no || `RCPT-${String(index + 1).padStart(5,'0')}`,
+    receiptNo: p.receipt_no || `OLD-RCPT-${String(index + 1).padStart(5,'0')}`,
     balanceAfter: Number(p.balance_after || 0)
   }));
 
