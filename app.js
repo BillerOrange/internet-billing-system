@@ -1280,13 +1280,13 @@ window.showReceipt = receiptNo => {
       <br>
       <div class="receipt-row"><span>Receipt No.</span><strong>${p.receiptNo}</strong></div>
       <div class="receipt-row"><span>Date</span><strong>${p.date}</strong></div>
-      <div class="receipt-row"><span>Account No.</span><strong>${p.accountNo}</strong></div>
-      <div class="receipt-row"><span>Customer</span><strong>${p.customerName}</strong></div>
-      <div class="receipt-row"><span>Plan</span><strong>${c?.plan || '-'}</strong></div>
-      <div class="receipt-row"><span>Reference</span><strong>${p.reference || '-'}</strong></div>
+      <div class="receipt-row"><span>Account No.</span><strong>${p.accountNo || c?.accountNo || '-'}</strong></div>
+      <div class="receipt-row"><span>Customer</span><strong>${p.customerName || c?.name || '-'}</strong></div>
+      <div class="receipt-row"><span>Plan</span><strong>${c?.plan || p.plan || '-'}</strong></div>
+      <div class="receipt-row"><span>Reference</span><strong>${p.reference || p.receiptNo || '-'}</strong></div>
       <div class="receipt-row"><span>Payment Received By</span><strong>${p.issuedBy || '-'}</strong></div>
       <div class="receipt-row receipt-total"><span>Amount Paid</span><strong>${money(p.amount)}</strong></div>
-      <div class="receipt-row"><span>Remaining Balance</span><strong>${money(p.balanceAfter)}</strong></div>
+      <div class="receipt-row"><span>Remaining Balance</span><strong>${money(p.balanceAfter ?? c?.balance ?? 0)}</strong></div>
       <br>
       <div class="center">Thank you for your payment.</div>
     </div>
