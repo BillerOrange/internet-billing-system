@@ -1214,6 +1214,7 @@ const { data: savedPayment, error: paymentError } = await supabaseClient
     amount: amount,
     payment_date: date,
     payment_method: 'Cash',
+    receipt_no: receiptNo,
     reference_no: reference || receiptNo,
     notes: '',
     collector_email: '',
