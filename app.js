@@ -989,21 +989,28 @@ function fillCustomerSelects(){
     }
   }
 }
-$('paymentSearch')?.addEventListener('input', e => {
-  const search = e.target.value.toLowerCase().trim();
+function setupPaymentSearch(){
+  const searchBox = document.getElementById('paymentSearch');
 
-  const filtered = customers.filter(c =>
-    c.name.toLowerCase().includes(search) ||
-    c.accountNo.toLowerCase().includes(search)
-  );
+  if(searchBox){
+    searchBox.addEventListener('input', () => {
+      const search = searchBox.value.toLowerCase().trim();
 
-  $('paymentCustomer').innerHTML =
-    filtered.map(c =>
-      `<option value="${c.id}">${c.accountNo} - ${c.name}</option>`
-    ).join('') || '<option value="">No customer found</option>';
-});
+      const filtered = customers.filter(c =>
+        c.name.toLowerCase().includes(search) ||
+        c.accountNo.toLowerCase().includes(search)
+      );
+
+      document.getElementById('paymentCustomer').innerHTML =
+        filtered.map(c =>
+          `<option value="${c.id}">${c.accountNo} - ${c.name}</option>`
+        ).join('') || '<option value="">No customer found</option>';
+    });
+  }
+}
 function renderAll(){
   cleanupPaidActivationDuplicates();
+  setupPaymentSearch();
   renderDashboard();
   renderCustomers();
   renderBilling();
