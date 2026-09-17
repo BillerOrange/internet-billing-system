@@ -1421,6 +1421,7 @@ if($('downloadReceiptBtn')){
 }
 if($('#printReceiptBtn')){
   $('#printReceiptBtn').addEventListener('click',()=>{
+    alert("Print button clicked");
     const receipt = $('#receiptContent').innerHTML;
 
     const printWindow = window.open('', '_blank');
