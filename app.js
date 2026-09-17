@@ -1276,23 +1276,21 @@ const payment = {
   balanceAfter: newBalance
 };
 
-payments.push(payment);
+payments.push({...payment});
 
 $('paymentAmount').value = '';
 $('paymentReference').value = '';
 if($('paymentIssuedBy')) $('paymentIssuedBy').value = '';
 
-await loadCustomersFromSupabase();
-renderAll();
+// await loadCustomersFromSupabase();
 showReceipt(payment.receiptNo);
+renderAll();
 });
 
 window.showReceipt = receiptNo => {
-  const p = payments.find(x =>
-    x.receiptNo === receiptNo ||
-    x.receipt_no === receiptNo ||
-    String(x.id) === String(receiptNo)
-  );
+  const p = payments.find(x => 
+  x.receiptNo === receiptNo
+);
 
   if (!p) {
     alert('Payment record not found.');
