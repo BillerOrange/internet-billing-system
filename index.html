@@ -199,8 +199,13 @@
         </div>
 
         <div class="card form-grid">
-          <label>Customer
-            <select id="paymentCustomer"></select>
+          <label>Search Customer</label>
+<input id="paymentSearch" type="text" placeholder="Search name or account no.">
+
+<label>Customer</label>
+<select id="paymentCustomer">
+  <option value="">Search customer first</option>
+</select>
           </label>
           <label>Amount Paid
             <input id="paymentAmount" type="number" min="0" step="0.01" placeholder="0.00" />
