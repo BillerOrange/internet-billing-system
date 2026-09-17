@@ -1155,7 +1155,7 @@ const newBalance = previousBalance + amount;
 
 const { error: billError } = await supabaseClient
   .from('billing')
-  .insert([{
+  .upsert({
     client_id: c.id,
     billing_month: todayISO(),
     previous_balance: previousBalance,
@@ -1163,7 +1163,9 @@ const { error: billError } = await supabaseClient
     due_date: dueDate,
     status: 'Unpaid',
     description: 'Monthly internet bill'
-  }]);
+  }, {
+    onConflict: 'client_id,billing_month'
+  });
 
 if(billError){
   console.error(billError);
