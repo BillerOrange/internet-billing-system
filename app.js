@@ -1419,7 +1419,32 @@ if($('downloadReceiptBtn')){
     }
   });
 }
+if($('#printReceiptBtn')){
+  $('#printReceiptBtn').addEventListener('click',()=>{
+    const receipt = $('#receiptContent').innerHTML;
+    const printWindow = window.open('', '_blank');
 
+    printWindow.document.write(`
+      <html>
+      <head>
+      <title>Receipt</title>
+      <style>
+      body{
+        font-family: Arial;
+        padding:20px;
+      }
+      </style>
+      </head>
+      <body>
+      ${receipt}
+      </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.print();
+  });
+}
 $('customerSearch').addEventListener('input',renderCustomers);
 $('statusFilter').addEventListener('change',renderCustomers);
 if($('collectionReportType')) $('collectionReportType').addEventListener('change',renderCollectionReport);
