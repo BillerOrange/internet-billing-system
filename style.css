@@ -442,3 +442,23 @@ label{display:flex;flex-direction:column;gap:6px;font-size:14px}
   font-size: 13px;
   color: #aaa;
 }
+@media(max-width:760px){
+  input,
+  select,
+  button,
+  textarea{
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box;
+  }
+
+  .card{
+    width:100%;
+    max-width:100%;
+    padding:14px;
+  }
+
+  .main-content{
+    padding:12px;
+  }
+}
