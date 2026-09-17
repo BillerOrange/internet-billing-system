@@ -1155,7 +1155,7 @@ const newBalance = previousBalance + amount;
 
 const { error: billError } = await supabaseClient
   .from('billing')
-  .upsert({
+  .insert([{
     client_id: c.id,
     billing_month: todayISO(),
     previous_balance: previousBalance,
@@ -1163,9 +1163,7 @@ const { error: billError } = await supabaseClient
     due_date: dueDate,
     status: 'Unpaid',
     description: 'Monthly internet bill'
-  }, {
-    onConflict: 'client_id,billing_month'
-  });
+  }]);
 
 if(billError){
   console.error(billError);
@@ -1421,16 +1419,22 @@ if($('downloadReceiptBtn')){
     }
   });
 }
-const printBtn = document.getElementById('printReceiptBtn');
-
-if(printBtn){
-  printBtn.addEventListener('click',()=>{
-    const receipt = document.getElementById('receiptContent').innerHTML;
-
+if($('#printReceiptBtn')){
+  $('#printReceiptBtn').addEventListener('click',()=>{
+    const receipt = $('#receiptContent').innerHTML;
     const printWindow = window.open('', '_blank');
 
     printWindow.document.write(`
       <html>
+      <head>
+      <title>Receipt</title>
+      <style>
+      body{
+        font-family: Arial;
+        padding:20px;
+      }
+      </style>
+      </head>
       <body>
       ${receipt}
       </body>
@@ -1440,7 +1444,7 @@ if(printBtn){
     printWindow.document.close();
     printWindow.print();
   });
-
+}
 $('customerSearch').addEventListener('input',renderCustomers);
 $('statusFilter').addEventListener('change',renderCustomers);
 if($('collectionReportType')) $('collectionReportType').addEventListener('change',renderCollectionReport);
