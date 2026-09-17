@@ -89,7 +89,7 @@ label{display:flex;flex-direction:column;gap:6px;font-size:14px}
   }
   .sidebar nav{
     display:grid;
-    grid-template-columns:repeat(5,1fr);
+    grid-template-columns:repeat(3,1fr);
     gap:6px;
     overflow-x:auto;
   }
