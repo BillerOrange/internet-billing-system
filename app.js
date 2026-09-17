@@ -1423,34 +1423,38 @@ const printBtn = document.getElementById('printReceiptBtn');
 
 if(printBtn){
   printBtn.addEventListener('click',()=>{
-    const receipt = $('#receiptContent').innerHTML;
+const receipt = document.getElementById('receiptContent').innerHTML;;
 
-    const printWindow = window.open('', '_blank');
+const printWindow = window.open('', '_blank');
 
-    printWindow.document.write(`
-      <html>
-      <head>
-        <title>Receipt</title>
-        <style>
-          body{
-            font-family: Arial;
-            padding:20px;
-          }
-        </style>
-      </head>
-      <body>
-        ${receipt}
-      </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-
-    setTimeout(()=>{
-      printWindow.print();
-    },500);
-  });
+if(!printWindow){
+  alert('Please allow pop-ups to print receipt.');
+  return;
 }
+
+printWindow.document.write(`
+<html>
+<head>
+<title>Receipt</title>
+<style>
+body{
+font-family: Arial;
+padding:20px;
+}
+</style>
+</head>
+<body>
+${receipt}
+</body>
+</html>
+`);
+
+printWindow.document.close();
+
+printWindow.onload = function(){
+  printWindow.print();
+};
+  });
 }
 $('customerSearch').addEventListener('input',renderCustomers);
 $('statusFilter').addEventListener('change',renderCustomers);
