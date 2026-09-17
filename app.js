@@ -1196,6 +1196,7 @@ $('recordPaymentBtn').addEventListener('click', async ()=>{
   const customerId = $('paymentCustomer').value;
   const amount = Number($('paymentAmount').value || 0);
   const date = $('paymentDate').value || todayISO();
+  const time = $('paymentTime').value || new Date().toTimeString().slice(0,5);
   const reference = $('paymentReference').value.trim();
   const issuedBy = $('paymentIssuedBy')?.value.trim() || '';
   const c = customers.find(x=>x.id===customerId);
@@ -1232,6 +1233,7 @@ const { data: savedPayment, error: paymentError } = await supabaseClient
     client_id: c.id,
     amount: amount,
     payment_date: date,
+    payment_time: time,
     payment_method: 'Cash',
     receipt_no: receiptNo,
     reference_no: reference || receiptNo,
