@@ -1422,38 +1422,23 @@ if($('downloadReceiptBtn')){
 const printBtn = document.getElementById('printReceiptBtn');
 
 if(printBtn){
-  printBtn.addEventListener('click', async()=>{
-
-    const receipt = document.getElementById('receiptContent');
-
-    const canvas = await html2canvas(receipt,{
-      backgroundColor:'#ffffff',
-      scale:2
-    });
-
-    const image = canvas.toDataURL('image/png');
+  printBtn.addEventListener('click',()=>{
+    const receipt = document.getElementById('receiptContent').innerHTML;
 
     const printWindow = window.open('', '_blank');
 
     printWindow.document.write(`
       <html>
-      <head>
-      <title>NetBill Receipt</title>
-      </head>
-      <body style="text-align:center">
-      <img src="${image}" style="width:100%">
+      <body>
+      ${receipt}
       </body>
       </html>
     `);
 
     printWindow.document.close();
-
-    setTimeout(()=>{
-      printWindow.print();
-    },500);
-
+    printWindow.print();
   });
-}
+
 $('customerSearch').addEventListener('input',renderCustomers);
 $('statusFilter').addEventListener('change',renderCustomers);
 if($('collectionReportType')) $('collectionReportType').addEventListener('change',renderCollectionReport);
