@@ -989,7 +989,19 @@ function fillCustomerSelects(){
     }
   }
 }
+$('paymentSearch')?.addEventListener('input', e => {
+  const search = e.target.value.toLowerCase().trim();
 
+  const filtered = customers.filter(c =>
+    c.name.toLowerCase().includes(search) ||
+    c.accountNo.toLowerCase().includes(search)
+  );
+
+  $('paymentCustomer').innerHTML =
+    filtered.map(c =>
+      `<option value="${c.id}">${c.accountNo} - ${c.name}</option>`
+    ).join('') || '<option value="">No customer found</option>';
+});
 function renderAll(){
   cleanupPaidActivationDuplicates();
   renderDashboard();
