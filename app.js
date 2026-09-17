@@ -1199,7 +1199,7 @@ $('recordPaymentBtn').addEventListener('click', async ()=>{
   const reference = $('paymentReference').value.trim();
   const issuedBy = $('paymentIssuedBy')?.value.trim() || '';
   const c = customers.find(x=>x.id===customerId);
-
+console.log("SELECTED CUSTOMER:", c);
   if(!c || amount <= 0){
     alert('Select a customer and enter a valid payment amount.');
     return;
