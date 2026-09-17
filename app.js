@@ -1422,6 +1422,7 @@ if($('downloadReceiptBtn')){
 if($('#printReceiptBtn')){
   $('#printReceiptBtn').addEventListener('click',()=>{
     const receipt = $('#receiptContent').innerHTML;
+
     const printWindow = window.open('', '_blank');
 
     printWindow.document.write(`
@@ -1430,7 +1431,7 @@ if($('#printReceiptBtn')){
       <title>Receipt</title>
       <style>
       body{
-        font-family: Arial;
+        font-family:Arial;
         padding:20px;
       }
       </style>
