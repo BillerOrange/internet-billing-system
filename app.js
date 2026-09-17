@@ -1419,32 +1419,39 @@ if($('downloadReceiptBtn')){
     }
   });
 }
-if($('#printReceiptBtn')){
-  $('#printReceiptBtn').addEventListener('click',()=>{
-    alert("Print button clicked");
-    const receipt = $('#receiptContent').innerHTML;
+const printBtn = document.getElementById('printReceiptBtn');
+
+if(printBtn){
+  printBtn.addEventListener('click', async()=>{
+
+    const receipt = document.getElementById('receiptContent');
+
+    const canvas = await html2canvas(receipt,{
+      backgroundColor:'#ffffff',
+      scale:2
+    });
+
+    const image = canvas.toDataURL('image/png');
 
     const printWindow = window.open('', '_blank');
 
     printWindow.document.write(`
       <html>
       <head>
-      <title>Receipt</title>
-      <style>
-      body{
-        font-family:Arial;
-        padding:20px;
-      }
-      </style>
+      <title>NetBill Receipt</title>
       </head>
-      <body>
-      ${receipt}
+      <body style="text-align:center">
+      <img src="${image}" style="width:100%">
       </body>
       </html>
     `);
 
     printWindow.document.close();
-    printWindow.print();
+
+    setTimeout(()=>{
+      printWindow.print();
+    },500);
+
   });
 }
 $('customerSearch').addEventListener('input',renderCustomers);
