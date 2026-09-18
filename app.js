@@ -1282,6 +1282,7 @@ const payment = {
   accountNo: c.accountNo,
   amount,
   date,
+  paymentTime: time,
   reference: reference || receiptNo,
   issuedBy,
   balanceAfter: newBalance
