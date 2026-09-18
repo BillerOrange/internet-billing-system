@@ -223,10 +223,13 @@ function nextAccountNo(){
   const next = Math.max(0, ...nums) + 1;
   return 'NB-' + String(next).padStart(4,'0');
 }
+async function nextReceiptNo(){
+  const { data } = await supabaseClient
+    .from('payments')
+    .select('receipt_no');
 
-function nextReceiptNo(){
-  const numbers = payments
-    .map(p => Number(String(p.receiptNo || p.receipt_no || '').replace('RCPT-', '')))
+  const numbers = (data || [])
+    .map(p => Number(String(p.receipt_no || '').replace('RCPT-', '')))
     .filter(n => !isNaN(n));
 
   const next = numbers.length ? Math.max(...numbers) + 1 : 1;
@@ -1222,7 +1225,7 @@ console.log("SELECTED CUSTOMER:", c);
 
   const previousBalance = Number(c.balance || 0);
 const newBalance = Math.max(0, previousBalance - amount);
-const receiptNo = nextReceiptNo();
+const receiptNo = await nextReceiptNo();
 
 const { data: latestBill } = await supabaseClient
   .from('billing')
