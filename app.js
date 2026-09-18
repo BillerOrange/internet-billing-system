@@ -1321,7 +1321,11 @@ window.showReceipt = receiptNo => {
     p.reference_no ||
     p.reference ||
     `PAY-${p.id || 'OLD'}`;
-
+const finalPaymentTime =
+    p.paymentTime ||
+    p.payment_time ||
+    (p.created_at ? p.created_at.split('T')[1]?.split('.')[0] : '') ||
+    '-';
   const finalDate =
     p.date ||
     p.payment_date ||
@@ -1379,7 +1383,7 @@ window.showReceipt = receiptNo => {
       <div class="receipt-row"><span>Receipt No.</span><strong>${finalReceiptNo}</strong></div>
       <div class="receipt-row"><span>Date</span><strong>${finalDate}</strong></div>
 
-<div class="receipt-row"><span>Payment Time</span><strong>${p.payment_time || p.paymentTime || '-'}</strong></div>
+<div class="receipt-row"><span>Payment Time</span><strong>${finalPaymentTime}</strong></div>
       <div class="receipt-row"><span>Account No.</span><strong>${finalAccountNo}</strong></div>
       <div class="receipt-row"><span>Customer</span><strong>${finalCustomerName}</strong></div>
       <div class="receipt-row"><span>Plan</span><strong>${finalPlan}</strong></div>
