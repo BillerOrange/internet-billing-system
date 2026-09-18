@@ -1291,10 +1291,7 @@ showReceipt(payment.receiptNo);
 renderAll();
 });
 
-window.showReceipt = receiptNo => {
-  const p = payments.find(x => 
-  x.receiptNo === receiptNo
-);
+const p = payments[payments.length - 1];
 
   if (!p) {
     alert('Payment record not found.');
