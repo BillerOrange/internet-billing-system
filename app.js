@@ -1199,7 +1199,7 @@ $('recordPaymentBtn').addEventListener('click', async ()=>{
   const time = $('paymentTime').value || new Date().toTimeString().slice(0,5);
   const reference = $('paymentReference').value.trim();
   const issuedBy = $('paymentIssuedBy')?.value.trim() || '';
-  const c = customers.find(x=>x.id===customerId);
+  const c = customers.find(x=>String(x.id)===String(customerId));
 console.log("SELECTED CUSTOMER:", c);
   if(!c || amount <= 0){
     alert('Select a customer and enter a valid payment amount.');
@@ -1291,18 +1291,18 @@ showReceipt(payment.receiptNo);
 renderAll();
 });
 
-const p = payments[payments.length - 1];
+const p = payments.find(x => x.receiptNo === receiptNo);
 
   if (!p) {
     alert('Payment record not found.');
     return;
   }
 
-  const customerId = p.customerId || p.customer_id || p.client_id;
-
-  const c = customers.find(x =>
-    String(x.id) === String(customerId)
-  ) || {};
+  const c = {
+  name: p.customerName || '',
+  accountNo: p.accountNo || '',
+  plan: p.plan || ''
+};
 
   const finalReceiptNo =
     p.receiptNo ||
