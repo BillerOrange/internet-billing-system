@@ -1413,6 +1413,7 @@ const createdDateTime =
       <div class="receipt-row"><span>Payment Received By</span><strong>${finalIssuedBy}</strong></div>
       <div class="receipt-row receipt-total"><span>Amount Paid</span><strong>${money(finalAmount)}</strong></div>
       <div class="receipt-row"><span>Remaining Balance</span><strong>${money(finalBalance)}</strong></div>
+      <div class="receipt-row"><span>CDT</span><strong>${createdDateTime}</strong></div>
       <br>
       <div class="center">Thank you for your payment.</div>
     </div>
