@@ -1377,6 +1377,7 @@ window.showReceipt = receiptNo => {
       <br>
       <div class="receipt-row"><span>Receipt No.</span><strong>${finalReceiptNo}</strong></div>
       <div class="receipt-row"><span>Date</span><strong>${finalDate}</strong></div>
+<div class="receipt-row"><span>Payment Time</span><strong>${p.payment_time || '-'}</strong></div>
       <div class="receipt-row"><span>Account No.</span><strong>${finalAccountNo}</strong></div>
       <div class="receipt-row"><span>Customer</span><strong>${finalCustomerName}</strong></div>
       <div class="receipt-row"><span>Plan</span><strong>${finalPlan}</strong></div>
