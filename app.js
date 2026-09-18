@@ -1386,6 +1386,16 @@ const finalPaymentTime = (() => {
       0
     );
 
+const createdDateTime =
+  new Date().toLocaleString([], {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+  
   $('receiptContent').innerHTML = `
     <div class="receipt">
       <h2>NETBILL</h2>
