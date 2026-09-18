@@ -226,7 +226,7 @@ function nextAccountNo(){
 
 function nextReceiptNo(){
   const numbers = payments
-    .map(p => Number(String(p.receipt_no || '').replace('RCPT-', '')))
+    .map(p => Number(String(p.receiptNo || p.receipt_no || '').replace('RCPT-', '')))
     .filter(n => !isNaN(n));
 
   const next = numbers.length ? Math.max(...numbers) + 1 : 1;
