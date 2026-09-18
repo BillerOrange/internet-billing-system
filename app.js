@@ -1199,7 +1199,7 @@ $('recordPaymentBtn').addEventListener('click', async ()=>{
   const time = $('paymentTime').value || new Date().toTimeString().slice(0,5);
   const reference = $('paymentReference').value.trim();
   const issuedBy = $('paymentIssuedBy')?.value.trim() || '';
-  const c = customers.find(x=>String(x.id)===String(customerId));
+  const c = customers.find(x=>x.id===customerId);
 console.log("SELECTED CUSTOMER:", c);
   if(!c || amount <= 0){
     alert('Select a customer and enter a valid payment amount.');
@@ -1266,18 +1266,16 @@ if(clientError){
 }
 
 const payment = {
-    ...savedPayment,
-    id: savedPayment.id,
-    receiptNo: receiptNo,
-    customerId: c.id,
-    customerName: c.name,
-    accountNo: c.accountNo,
-    amount,
-    date,
-    reference: reference || receiptNo,
-    issuedBy,
-    balanceAfter: newBalance,
-    created_at: savedPayment.created_at
+  id: savedPayment.id,
+  receiptNo: receiptNo,
+  customerId: c.id,
+  customerName: c.name,
+  accountNo: c.accountNo,
+  amount,
+  date,
+  reference: reference || receiptNo,
+  issuedBy,
+  balanceAfter: newBalance
 };
 
 payments.push({...payment});
@@ -1291,7 +1289,10 @@ showReceipt(payment.receiptNo);
 renderAll();
 });
 
-const p = payments.find(x => x.receiptNo === receiptNo);
+window.showReceipt = receiptNo => {
+  const p = payments.find(x => 
+  x.receiptNo === receiptNo
+);
 
   if (!p) {
     alert('Payment record not found.');
@@ -1300,9 +1301,9 @@ const p = payments.find(x => x.receiptNo === receiptNo);
 
   const customerId = p.customerId || p.customer_id || p.client_id;
 
-const c = customers.find(x =>
-  String(x.id) === String(customerId)
-) || {};
+  const c = customers.find(x =>
+    String(x.id) === String(customerId)
+  ) || {};
 
   const finalReceiptNo =
     p.receiptNo ||
@@ -1311,22 +1312,12 @@ const c = customers.find(x =>
     p.reference ||
     `PAY-${p.id || 'OLD'}`;
 
-  const paymentDate =
-p.payment_date ||
-'-';
+  const finalDate =
+    p.date ||
+    p.payment_date ||
+    p.created_at?.split('T')[0] ||
+    '-';
 
-const paymentTime =
-p.payment_time ||
-'-';
-
-const receiptCreatedDate =
-p.created_at?.split('T')[0] ||
-'-';
-
-const receiptCreatedTime =
-p.created_at?.split('T')[1]?.slice(0,8) ||
-'-';
-  
   const finalAccountNo =
     p.accountNo ||
     p.account_no ||
@@ -1376,10 +1367,7 @@ p.created_at?.split('T')[1]?.slice(0,8) ||
       <div class="center">Official Payment Receipt</div>
       <br>
       <div class="receipt-row"><span>Receipt No.</span><strong>${finalReceiptNo}</strong></div>
-      <div class="receipt-row"><span>Payment Date</span><strong>${paymentDate}</strong></div>
-      <div class="receipt-row"><span>Payment Time</span><strong>${paymentTime}</strong></div>
-      <div class="receipt-row"><span>Receipt Created</span><strong>${receiptCreatedDate}</strong></div>
-<div class="receipt-row"><span>Created Time</span><strong>${receiptCreatedTime}</strong></div>
+      <div class="receipt-row"><span>Date</span><strong>${finalDate}</strong></div>
       <div class="receipt-row"><span>Account No.</span><strong>${finalAccountNo}</strong></div>
       <div class="receipt-row"><span>Customer</span><strong>${finalCustomerName}</strong></div>
       <div class="receipt-row"><span>Plan</span><strong>${finalPlan}</strong></div>
