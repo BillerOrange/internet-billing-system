@@ -1321,20 +1321,14 @@ window.showReceipt = receiptNo => {
     p.reference_no ||
     p.reference ||
     `PAY-${p.id || 'OLD'}`;
-const finalPaymentTime =
-  (p.paymentTime || p.payment_time)
+const finalPaymentTime = 
+  p.paymentTime || p.payment_time
     ? new Date(`1970-01-01T${p.paymentTime || p.payment_time}`).toLocaleTimeString([], {
-        hour: '2-digit',
+        hour: 'numeric',
         minute: '2-digit',
         hour12: true
       })
-    : (p.created_at
-        ? new Date(p.created_at).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-          })
-        : '-');
+    : '-';
   const finalDate =
     p.date ||
     p.payment_date ||
