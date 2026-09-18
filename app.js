@@ -1266,16 +1266,18 @@ if(clientError){
 }
 
 const payment = {
-  id: savedPayment.id,
-  receiptNo: receiptNo,
-  customerId: c.id,
-  customerName: c.name,
-  accountNo: c.accountNo,
-  amount,
-  date,
-  reference: reference || receiptNo,
-  issuedBy,
-  balanceAfter: newBalance
+    ...savedPayment,
+    id: savedPayment.id,
+    receiptNo: receiptNo,
+    customerId: c.id,
+    customerName: c.name,
+    accountNo: c.accountNo,
+    amount,
+    date,
+    reference: reference || receiptNo,
+    issuedBy,
+    balanceAfter: newBalance,
+    created_at: savedPayment.created_at
 };
 
 payments.push({...payment});
@@ -1312,12 +1314,22 @@ window.showReceipt = receiptNo => {
     p.reference ||
     `PAY-${p.id || 'OLD'}`;
 
-  const finalDate =
-    p.date ||
-    p.payment_date ||
-    p.created_at?.split('T')[0] ||
-    '-';
+  const paymentDate =
+p.payment_date ||
+'-';
 
+const paymentTime =
+p.payment_time ||
+'-';
+
+const receiptCreatedDate =
+p.created_at?.split('T')[0] ||
+'-';
+
+const receiptCreatedTime =
+p.created_at?.split('T')[1]?.slice(0,8) ||
+'-';
+  
   const finalAccountNo =
     p.accountNo ||
     p.account_no ||
@@ -1367,7 +1379,10 @@ window.showReceipt = receiptNo => {
       <div class="center">Official Payment Receipt</div>
       <br>
       <div class="receipt-row"><span>Receipt No.</span><strong>${finalReceiptNo}</strong></div>
-      <div class="receipt-row"><span>Date</span><strong>${finalDate}</strong></div>
+      <div class="receipt-row"><span>Payment Date</span><strong>${paymentDate}</strong></div>
+      <div class="receipt-row"><span>Payment Time</span><strong>${paymentTime}</strong></div>
+      <div class="receipt-row"><span>Receipt Created</span><strong>${receiptCreatedDate}</strong></div>
+<div class="receipt-row"><span>Created Time</span><strong>${receiptCreatedTime}</strong></div>
       <div class="receipt-row"><span>Account No.</span><strong>${finalAccountNo}</strong></div>
       <div class="receipt-row"><span>Customer</span><strong>${finalCustomerName}</strong></div>
       <div class="receipt-row"><span>Plan</span><strong>${finalPlan}</strong></div>
