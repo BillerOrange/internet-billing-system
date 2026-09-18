@@ -1298,11 +1298,11 @@ const p = payments.find(x => x.receiptNo === receiptNo);
     return;
   }
 
-  const c = {
-  name: p.customerName || '',
-  accountNo: p.accountNo || '',
-  plan: p.plan || ''
-};
+  const customerId = p.customerId || p.customer_id || p.client_id;
+
+const c = customers.find(x =>
+  String(x.id) === String(customerId)
+) || {};
 
   const finalReceiptNo =
     p.receiptNo ||
