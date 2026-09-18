@@ -225,7 +225,13 @@ function nextAccountNo(){
 }
 
 function nextReceiptNo(){
-  return 'RCPT-' + String(payments.length + 1).padStart(5,'0');
+  const numbers = payments
+    .map(p => Number(String(p.receipt_no || '').replace('RCPT-', '')))
+    .filter(n => !isNaN(n));
+
+  const next = numbers.length ? Math.max(...numbers) + 1 : 1;
+
+  return 'RCPT-' + String(next).padStart(5,'0');
 }
 
 function renderDashboard(){
@@ -430,7 +436,7 @@ function recordInitialActivationPayment(customer, status){
 
   customer.balance = Math.max(0, previousBalance - paymentAmount);
 
-  const receiptNo = `RCPT-${String(payments.length + 1).padStart(5,'0')}`;
+  const receiptNo = nextReceiptNo();
   payments.push({
     id: Date.now() + Math.random(),
     customerId: customer.id,
